@@ -11,10 +11,14 @@ let
 
   glualint-lib = callPackage ../glualint { };
 
-  drv = { mkDerivation, base, glualint-lib, stdenv, ghcjs-base ? null
-    , aeson, array, bytestring, containers
-    , directory, filemanip, filepath, ListLike, MissingH, mtl, parsec
-    , pretty, uu-parsinglib, uuagc, uuagc-cabal, vector
+  drv = { mkDerivation, base, glualint-lib, stdenv, ghcjs-base
+    , containers
+    , reflex
+    , reflex-dom
+    , safe
+    # , aeson, array, bytestring, containers
+    # , directory, filemanip, filepath, ListLike, MissingH, mtl, parsec
+    # , pretty, uu-parsinglib, uuagc, uuagc-cabal, vector
     }:
     mkDerivation {
       pname = "glualint-web";
@@ -26,11 +30,15 @@ let
       libraryHaskellDepends = [uuagc uuagc-cabal];
       executableHaskellDepends = [
         base
+        containers
         ghcjs-base
         glualint-lib
-        aeson array base bytestring containers directory filemanip filepath
-        ListLike MissingH mtl parsec pretty uu-parsinglib uuagc uuagc-cabal
-        vector
+        reflex
+        reflex-dom
+        safe
+        # aeson array base bytestring containers directory filemanip filepath
+        # ListLike MissingH mtl parsec pretty uu-parsinglib uuagc uuagc-cabal
+        # vector
       ];
       description = "Clientside web version of glualint";
       license = stdenv.lib.licenses.gpl2;
