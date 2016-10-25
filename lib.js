@@ -1188,24 +1188,10 @@ goog.crypt.Md5.prototype.digest = function() {
 // #define GHCJS_TRACE_IO 1
 function h$base_access(file, file_off, mode, c) {
     ;
-    if(h$isNode) {
-        h$fs.stat(fd, function(err, fs) {
-            if(err) {
-                h$handleErrnoC(err, -1, 0, c);
-            } else {
-                c(mode & fs.mode); // fixme is this ok?
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_chmod(file, file_off, mode, c) {
     ;
-    if(h$isNode) {
-        h$fs.chmod(h$decodeUtf8z(file, file_off), mode, function(err) {
-            h$handleErrnoC(err, -1, 0, c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_close(fd, c) {
@@ -1226,123 +1212,23 @@ function h$base_dup2(fd, c) {
 }
 function h$base_fstat(fd, stat, stat_off, c) {
     ;
-    if(h$isNode) {
-        h$fs.fstat(fd, function(err, fs) {
-            if(err) {
-                h$handlErrnoC(err, -1, 0, c);
-            } else {
-                h$base_fillStat(fs, stat, stat_off);
-                c(0);
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_isatty(fd) {
     ;
-    if(h$isNode) {
-        if(fd === 0) return process.stdin.isTTY?1:0;
-        if(fd === 1) return process.stdout.isTTY?1:0;
-        if(fd === 2) return process.stderr.isTTY?1:0;
-    }
     if(fd === 1 || fd === 2) return 1;
     return 0;
 }
 function h$base_lseek(fd, pos_1, pos_2, whence, c) {
     ;
-    if(h$isNode) {
-        var p = goog.math.Long.fromBits(pos_2, pos_1), p1;
-        var o = h$base_fds[fd];
-        if(!o) {
-            h$errno = CONST_BADF;
-            c(-1,-1);
-        } else {
-            switch(whence) {
-            case 0: /* SET */
-                o.pos = p.toNumber();
-                c(p.getHighBits(), p.getLowBits());
-                break;
-            case 1: /* CUR */
-                o.pos += p.toNumber();
-                p1 = goog.math.Long.fromNumber(o.pos);
-                c(p1.getHighBits(), p1.getLowBits());
-                break;
-            case 2: /* END */
-                h$fs.fstat(fd, function(err, fs) {
-                    if(err) {
-                        h$setErrno(err);
-                        c(-1,-1);
-                    } else {
-                        o.pos = fs.size + p.toNumber();
-                        p1 = goog.math.Long.fromNumber(o.pos);
-                        c(p1.getHighBits(), p1.getLowBits());
-                    }
-                });
-                break;
-            default:
-                h$errno = 22;
-                c(-1,-1);
-            }
-        }
-    } else {
         h$unsupported();
         c(-1, -1);
-    }
 }
 function h$base_lstat(file, file_off, stat, stat_off, c) {
     ;
-    if(h$isNode) {
-        h$fs.lstat(h$decodeUtf8z(file, file_off), function(err, fs) {
-            if(err) {
-                h$handleErrnoC(err, -1, 0, c);
-            } else {
-                h$base_fillStat(fs, stat, stat_off);
-                c(0);
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_open(file, file_off, how, mode, c) {
-    if(h$isNode) {
-        var flags, off;
-        var fp = h$decodeUtf8z(file, file_off);
-        var acc = how & h$base_o_accmode;
-        // passing a number lets node.js use it directly as the flags (undocumented)
-        if(acc === h$base_o_rdonly) {
-            flags = h$processConstants['O_RDONLY'];
-        } else if(acc === h$base_o_wronly) {
-            flags = h$processConstants['O_WRONLY'];
-        } else { // r+w
-            flags = h$processConstants['O_RDWR'];
-        }
-        off = (how & h$base_o_append) ? -1 : 0;
-        flags = flags | ((how & h$base_o_trunc) ? h$processConstants['O_TRUNC'] : 0)
-                      | ((how & h$base_o_creat) ? h$processConstants['O_CREAT'] : 0)
-                      | ((how & h$base_o_excl) ? h$processConstants['O_EXCL'] : 0)
-                      | ((how & h$base_o_append) ? h$processConstants['O_APPEND'] : 0);
-        h$fs.open(fp, flags, mode, function(err, fd) {
-            if(err) {
-                h$handleErrnoC(err, -1, 0, c);
-            } else {
-                var f = function(p) {
-                    h$base_fds[fd] = { read: h$base_readFile
-                                       , write: h$base_writeFile
-                                       , close: h$base_closeFile
-                                       , pos: p
-                                     };
-                    c(fd);
-                }
-                if(off === -1) {
-                    h$fs.stat(fp, function(err, fs) {
-                        if(err) h$handleErrnoC(err, -1, 0, c); else f(fs.size);
-                    });
-                } else {
-                    f(0);
-                }
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_read(fd, buf, buf_off, n, c) {
@@ -1357,21 +1243,10 @@ function h$base_read(fd, buf, buf_off, n, c) {
 }
 function h$base_stat(file, file_off, stat, stat_off, c) {
     ;
-    if(h$isNode) {
-        h$fs.stat(h$decodeUtf8z(file, file_off), function(err, fs) {
-            if(err) {
-                h$handlErrnoC(err, -1, 0, c);
-            } else {
-                h$base_fillStat(fs, stat, stat_off);
-                c(0);
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_umask(mode) {
     ;
-    if(h$isNode) return process.umask(mode);
     return 0;
 }
 function h$base_write(fd, buf, buf_off, n, c) {
@@ -1386,34 +1261,18 @@ function h$base_write(fd, buf, buf_off, n, c) {
 }
 function h$base_ftruncate(fd, pos_1, pos_2, c) {
     ;
-    if(h$isNode) {
-        h$fs.ftruncate(fd, goog.math.Long.fromBits(pos_2, pos_1).toNumber(), function(err) {
-            h$handleErrnoC(err, -1, 0, c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_unlink(file, file_off, c) {
     ;
-    if(h$isNode) {
-        h$fs.unlink(h$decodeUtf8z(file, file_off), function(err) {
-            h$handleErrnoC(err, -1, 0, c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_getpid() {
     ;
-    if(h$isNode) return process.pid;
     return 0;
 }
 function h$base_link(file1, file1_off, file2, file2_off, c) {
     ;
-    if(h$isNode) {
-        h$fs.link(h$decodeUtf8z(file1, file1_off), h$decodeUtf8z(file2, file2_off), function(err) {
-            h$handleErrnoC(err, -1, 0, c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_mkfifo(file, file_off, mode, c) {
@@ -1439,24 +1298,6 @@ function h$base_tcsetattr(attr, val, termios, termios_off) {
 }
 function h$base_utime(file, file_off, timbuf, timbuf_off, c) {
     ;
-    if(h$isNode) {
-        h$fs.fstat(h$decodeUtf8z(file, file_off), function(err, fs) {
-            if(err) {
-                h$handleErrnoC(err, 0, -1, c); // fixme
-            } else {
-                var atime = goog.math.Long.fromNumber(fs.atime.getTime());
-                var mtime = goog.math.Long.fromNumber(fs.mtime.getTime());
-                var ctime = goog.math.Long.fromNumber(fs.ctime.getTime());
-                timbuf.i3[0] = atime.getHighBits();
-                timbuf.i3[1] = atime.getLowBits();
-                timbuf.i3[2] = mtime.getHighBits();
-                timbuf.i3[3] = mtime.getLowBits();
-                timbuf.i3[4] = ctime.getHighBits();
-                timbuf.i3[5] = ctime.getLowBits();
-                c(0);
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$base_waitpid(pid, stat, stat_off, options, c) {
@@ -1487,22 +1328,6 @@ function h$base_c_s_isdir(mode) {
 }
 function h$base_c_s_isfifo(mode) {
     return 0;
-}
-function h$base_fillStat(fs, b, off) {
-    if(off%4) throw "h$base_fillStat: not aligned";
-    var o = off>>2;
-    b.i3[o+0] = fs.mode;
-    var s = goog.math.Long.fromNumber(fs.size);
-    b.i3[o+1] = s.getHighBits();
-    b.i3[o+2] = s.getLowBits();
-    b.i3[o+3] = 0; // fixme
-    b.i3[o+4] = 0; // fixme
-    b.i3[o+5] = fs.dev;
-    var i = goog.math.Long.fromNumber(fs.ino);
-    b.i3[o+6] = i.getHighBits();
-    b.i3[o+7] = i.getLowBits();
-    b.i3[o+8] = fs.uid;
-    b.i3[o+9] = fs.gid;
 }
 // [mode,size1,size2,mtime1,mtime2,dev,ino1,ino2,uid,gid] all 32 bit
 /** @const */ var h$base_sizeof_stat = 40;
@@ -1570,144 +1395,6 @@ function h$unlockFile(fd) {
 var h$base_readStdin , h$base_writeStderr, h$base_writeStdout;
 var h$base_closeStdin = null, h$base_closeStderr = null, h$base_closeStdout = null;
 var h$base_readFile, h$base_writeFile, h$base_closeFile;
-var h$base_stdin_waiting = new h$Queue();
-var h$base_stdin_chunk = { buf: null
-                           , pos: 0
-                           , processing: false
-                           };
-var h$base_stdin_eof = false;
-var h$base_process_stdin = function() {
-    var c = h$base_stdin_chunk;
-    var q = h$base_stdin_waiting;
-    if(!q.length() || c.processing) return;
-    c.processing = true;
-    if(!c.buf) { c.pos = 0; c.buf = process.stdin.read(); }
-    while(c.buf && q.length()) {
-        var x = q.dequeue();
-        var n = Math.min(c.buf.length - c.pos, x.n);
-        for(var i=0;i<n;i++) {
-            x.buf.u8[i+x.off] = c.buf[c.pos+i];
-        }
-        c.pos += n;
-        x.c(n);
-        if(c.pos >= c.buf.length) c.buf = null;
-        if(!c.buf && q.length()) { c.pos = 0; c.buf = process.stdin.read(); }
-    }
-    while(h$base_stdin_eof && q.length()) q.dequeue().c(0);
-    c.processing = false;
-}
-if(h$isNode) {
-    h$base_closeFile = function(fd, fdo, c) {
-        h$fs.close(fd, function(err) {
-            delete h$base_fds[fd];
-            h$handleErrnoC(err, -1, 0, c);
-        });
-    }
-    h$base_readFile = function(fd, fdo, buf, buf_offset, n, c) {
-        var pos = typeof fdo.pos === 'number' ? fdo.pos : null;
-        ;
-        h$fs.read(fd, new Buffer(n), 0, n, pos, function(err, bytesRead, nbuf) {
-            if(err) {
-                h$setErrno(err);
-                c(-1);
-            } else {
-                for(var i=bytesRead-1;i>=0;i--) buf.u8[buf_offset+i] = nbuf[i];
-                if(typeof fdo.pos === 'number') fdo.pos += bytesRead;
-                c(bytesRead);
-            }
-        });
-    }
-    h$base_readStdin = function(fd, fdo, buf, buf_offset, n, c) {
-        ;
-        h$base_stdin_waiting.enqueue({buf: buf, off: buf_offset, n: n, c: c});
-        h$base_process_stdin();
-    }
-    h$base_closeStdin = function(fd, fdo, c) {
-        ;
-        // process.stdin.close(); fixme
-        c(0);
-    }
-    h$base_writeFile = function(fd, fdo, buf, buf_offset, n, c) {
-        var pos = typeof fdo.pos === 'number' ? fdo.pos : null;
-        ;
-        var nbuf = new Buffer(n);
-        for(var i=0;i<n;i++) nbuf[i] = buf.u8[i+buf_offset];
-        if(typeof fdo.pos === 'number') fdo.pos += n;
-        h$fs.write(fd, nbuf, 0, n, pos, function(err, bytesWritten) {
-            ;
-            if(err) {
-                h$setErrno(err);
-                if(typeof fdo.pos === 'number') fdo.pos -= n;
-                if(h$errno === 35)
-                    setTimeout(function() { h$base_writeFile(fd, fdo, buf, buf_offset, n, c); }, 20);
-                else c(-1);
-            } else {
-                if(typeof fdo.pos === 'number') fdo.pos += bytesWritten - n;
-                c(bytesWritten);
-            }
-        });
-    }
-    h$base_writeStdout = function(fd, fdo, buf, buf_offset, n, c) {
-        ;
-        h$base_writeFile(1, fdo, buf, buf_offset, n, c);
-    }
-    h$base_closeStdout = function(fd, fdo, c) {
-        ;
- // not actually closed, fixme?
-        c(0);
-    }
-    h$base_writeStderr = function(fd, fdo, buf, buf_offset, n, c) {
-        ;
-        h$base_writeFile(2, fdo, buf, buf_offset, n, c);
-    }
-    h$base_closeStderr = function(fd, fdo, c) {
-        ;
- // not actually closed, fixme?
-        c(0);
-    }
-    process.stdin.on('readable', h$base_process_stdin);
-    process.stdin.on('end', function() { h$base_stdin_eof = true; h$base_process_stdin(); });
-} else if (h$isJsShell) {
-    h$base_readStdin = function(fd, fdo, buf, buf_offset, n, c) {
-        c(0);
-    }
-    h$base_writeStdout = function(fd, fdo, buf, buf_offset, n, c) {
-        putstr(h$decodeUtf8(buf, n, buf_offset));
-        c(n);
-    }
-    h$base_writeStderr = function(fd, fdo, buf, buf_offset, n, c) {
-        printErr(h$decodeUtf8(buf, n, buf_offset));
-        c(n);
-    }
-} else if(h$isJsCore) {
-    h$base_readStdin = function(fd, fdo, buf, buf_offset, n, c) {
- c(0);
-    }
-    var h$base_stdoutLeftover = { f: print, val: null };
-    var h$base_stderrLeftover = { f: debug, val: null };
-    var h$base_writeWithLeftover = function(buf, n, buf_offset, c, lo) {
- var lines = h$decodeUtf8(buf, n, buf_offset).split(/\r?\n/);
- if(lines.length === 1) {
-     if(lines[0].length) {
-  if(lo.val !== null) lo.val += lines[0];
-  else lo.val = lines[0];
-     }
- } else {
-            lo.f(((lo.val !== null) ? lo.val : '') + lines[0]);
-     for(var i=1;i<lines.length-1;i++) lo.f(lines[i]);
-     if(lines[lines.length-1].length) lo.val = lines[lines.length-1];
-     else lo.val = null;
- }
- c(n);
-    }
-    h$base_writeStdout = function(fd, fdo, buf, buf_offset, n, c) {
- h$base_writeWithLeftover(buf, n, buf_offset, c, h$base_stdoutLeftover);
-    }
-    h$base_writeStderr = function(fd, fdo, buf, buf_offset, n, c) {
- // writing to stderr not supported, write to stdout
- h$base_writeWithLeftover(buf, n, buf_offset, c, h$base_stderrLeftover);
-    }
-} else { // browser / fallback
     h$base_readStdin = function(fd, fdo, buf, buf_offset, n, c) {
         c(0);
     }
@@ -1719,7 +1406,6 @@ if(h$isNode) {
         console.log(h$decodeUtf8(buf, n, buf_offset));
         c(n);
     }
-}
 var h$base_stdin_fd = { read: h$base_readStdin, close: h$base_closeStdin };
 var h$base_stdout_fd = { write: h$base_writeStdout, close: h$base_closeStdout };
 var h$base_stderr_fd = { write: h$base_writeStderr, close: h$base_closeStderr };
@@ -1993,235 +1679,82 @@ function h$rand() {
 //        8 - search
 function h$directory_getPermissions(file, c) {
     ;
-    if(h$isNode) {
-        h$fs.stat(file, function(err, fs) {
-            if(err) {
-                h$handleErrnoC(err, -1, 0, c);
-            } else {
-                var m = fs.mode;
-                var r = (m&4) || (m&32) || (m&256);
-                var w = (m&2) || (m&16) || (m&128);
-                var x = (m&1) || (m&8) || (m&64);
-                var exe = x; // fixme?
-                var search = x; // fixme?
-                if(process.platform == 'win32') exe = true;
-                c((r?1:0)|(w?2:0)|(exe?4:0)|(search?8:0));
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_setPermissions(file, perms, c) {
     ;
-    if(h$isNode) {
-        h$fs.stat(file, function(err, fs) {
-            if(err) {
-                h$handleErrnoC(err, -1, 0, c);
-            } else {
-                var r = perms & 1;
-                var w = perms & 2;
-                var x = perms & 4;
-                var search = perms & 8;
-                var m = fs.mode;
-                m = r ? (m | 292) : (m & ~292);
-                m = w ? (m | 146) : (m & ~146);
-                m = (x || search) ? (m | 73) : (m & ~73);
-                h$fs.chmod(file, function(err) {
-                    h$handleErrnoC(err, -1, 0, c);
-                });
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_copyPermissions(file1, file2, c) {
     ;
-    if(h$isNode) {
-        h$fs.stat(file1, function(err1, fs) {
-            if(err1) {
-                h$handleErrnoC(err1, -1, 0, c);
-            } else {
-                h$fs.chmod(file2, fs.mode, function(err2) {
-                    h$handleErrnoC(err2, -1, 0, c);
-                });
-            }
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_createDirectory(dir, c) {
     ;
-    if(h$isNode) {
-        h$fs.mkdir(dir, function(err) {
-            h$handleErrnoC(err,-1,0,c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_removeDirectory(dir, c) {
     ;
-    if(h$isNode) {
-        h$fs.rmdir(dir, function(err) {
-            h$handleErrnoC(err,-1,0,c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_removeFile(file, c) {
     ;
-    if(h$isNode) {
-        h$fs.unlink(file, function(err) {
-            h$handleErrnoC(err,-1,0,c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_renameDirectory(dir1, dir2, c) {
     ;
-    if(h$isNode) {
-        h$fs.rename(dir1, dir2, function(err) {
-            h$handleErrnoC(err,-1,0,c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_renameFile(file1, file2, c) {
     ;
-    if(h$isNode) {
-        h$fs.rename(file1, file2, function(err) {
-            h$handleErrnoC(err,-1,0,c);
-        });
-    } else
         h$unsupported(-1, c);
 }
 function h$directory_canonicalizePath(path) {
     ;
-    if(h$isNode) {
-        return h$path.normalize(path);
-    } else
         return path;
 }
 function h$directory_findExecutables(name, c) {
     ;
-    if(h$isNode) {
-        var result = [];
-        var pathSep = process.platform === 'win32'?';':':';
-        var parts = process.env['PATH'].split(pathSep);
-        var exts = []; // process.platform === 'win32'?process.env['PATHEXT'].split(pathSep):[];
-        exts.push(null);
-        files = [];
-        result = [];
-        for(var i=0;i<parts.length;i++) {
-            for(var j=0;j<exts.length;j++) {
-                files.push(parts[i] + h$path.sep + name + (exts[j]?(exts[j]):""));
-            }
-        }
-        var tryFile = function(n) {
-            if(n >= files.length) {
-                c(result);
-            } else {
-                ;
-                h$fs.stat(files[n], function(err, fs) {
-                    if(!err && ((fs.mode & 73) || process.platform === 'win32')) result.push(files[n]);
-                    tryFile(n+1);
-                });
-            }
-        }
-        tryFile(0);
-    } else
         c([]);
 }
 function h$directory_getDirectoryContents(dir,c) {
     ;
-    if(h$isNode) {
-        h$fs.readdir(dir, function(err, d) {
-            h$handleErrnoC(err, null, d, c);
-        });
-    } else
         h$unsupported(null, c);
 }
 function h$directory_getCurrentDirectory() {
     ;
-    if(h$isNode) {
-        return h$handleErrno(null, function() {
-            return process.cwd();
-        });
-    } else
         return "/";
 }
 function h$directory_setCurrentDirectory(dir) {
     ;
-    if(h$isNode) {
-        return h$handleErrnoS(-1, 0, function() {
-            return process.chdir(dir);
-        });
-    } else
         return h$unsupported(-1);
 }
 function h$directory_getHomeDirectory(dir) {
     ;
-    if(h$isNode) {
-        return process.env['HOME'] ||
-            process.env['HOMEPATH'] ||
-            process.env['USERPROFILE'];
-    } else
         return "/"
 }
 function h$directory_getAppUserDataDirectory(appName) {
     ;
-    if(h$isNode) {
-        if(process.env['APPDATA'])
-            return process.env['APPDATA'] + h$path.sep + appName;
-        if(process.env['HOME'])
-            return process.env['HOME'] + h$path.sep + "." + appName;
-        ;
-        return "/";
-    } else
         return "/";
 }
 function h$directory_getUserDocumentsDirectory(appName) {
     ;
-    if(h$isNode) {
-        if(process.env['HOME'])
-            return process.env['HOME'];
-        // fixme handle Windows
-        ;
-        return "/";
-    } else
         return "/";
 }
 function h$directory_getTemporaryDirectory() {
     ;
-    if(h$isNode) {
-        return h$handleErrno(null, function() {
-            return h$os.tmpdir();
-        });
-    } else
         return "/";
 }
 function h$directory_exeExtension() {
     ;
-    if(h$isNode) {
-        return (h$os.platform() === 'windows') ? 'exe' : '';
-    } else
         return '';
 }
 function h$directory_getFileStatus(file, c) {
     ;
-    if(h$isNode) {
-        h$fs.stat(file, function(err, s) {
-            h$handleErrnoC(err, null, s, c);
-        });
-    } else
         h$unsupported(null, c);
 }
 function h$directory_getFileOrSymlinkStatus(file, c) {
     ;
-    if(h$isNode) {
-        h$fs.lstat(file, function(err, s) {
-            h$handleErrnoC(err, null, s, c);
-        });
-    } else
         h$unsupported(null, c);
 }
 function h$directory_getFileStatusModificationTime(fs) {
@@ -2234,12 +1767,6 @@ function h$directory_getFileStatusIsDirectory(fs) {
 }
 // fixme this doesn't really belong here
 function h$chmod(path_d, path_o, m) {
-    if(h$isNode) {
-        var path = h$decodeUtf8z(path_d, path_o);
-        ;
-        h$fs.chmodSync(path, m);
-        return 0;
-    } else
         return h$unsupported(-1);
 }
 /* Copyright (C) 1991-2016 Free Software Foundation, Inc.
@@ -2276,7 +1803,6 @@ function h$chmod(path_d, path_o, m) {
    2015-05-15).  */
 /* We do not support C11 <threads.h>.  */
 function h$filepath_isWindows() {
-    if(h$isNode && process.platform === 'win32') return true;
   return false;
 }
 /* Copyright (C) 1991-2016 Free Software Foundation, Inc.

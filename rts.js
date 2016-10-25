@@ -1380,39 +1380,15 @@ function h$ghcjszmprimZCGHCJSziPrimziJSVal_con_e() { return h$stack[h$sp]; };
 
    more platforms should be added here in the future
 */
-var h$isNode = false; // runtime is node.js
-var h$isJsShell = false; // runtime is SpiderMonkey jsshell
-var h$isJsCore = false; // runtime is JavaScriptCore jsc
-var h$isBrowser = false; // running in browser or everything else
-var h$isGHCJSi = false; // Code is GHCJSi (browser or node)
-// load all required node.js modules
-if(typeof process !== 'undefined' && (typeof h$TH !== 'undefined' || (typeof require !== 'undefined' && typeof module !== 'undefined' && module.exports))) {
-    h$isNode = true;
-    // we have to use these names for the closure compiler externs to work
-    var fs = require('fs');
-    var path = require('path');
-    var os = require('os');
-    var child_process = require('child_process');
-    var h$fs = fs;
-    var h$path = path;
-    var h$os = os;
-    var h$child = child_process;
-    var h$process = process;
-    var h$processConstants = process['binding']('constants');
-} else if(typeof snarf !== 'undefined' && typeof evalInFrame !== 'undefined' && typeof countHeap !== 'undefined') {
-    h$isJsShell = true;
-    this.console = { log: this.print };
-} else if(typeof numberOfDFGCompiles !== 'undefined' && typeof jscStack !== 'undefined') {
-    h$isJsCore = true;
-} else {
-    h$isBrowser = true;
-}
-if(typeof global !== 'undefined' && global.h$GHCJSi) {
-  h$isGHCJSi = true;
-}
 function h$getGlobal(that) {
     if(typeof global !== 'undefined') return global;
     return that;
+}
+// IE 8 doesn't support Date.now(), shim it
+if (!Date.now) {
+  Date.now = function now() {
+    return +(new Date);
+  };
 }
 /* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -3676,13 +3652,6 @@ var h$nbi = BigInteger.nbi;
     function clearImmediate(handle) {
         delete tasksByHandle[handle];
     }
-    function installNextTickImplementation() {
-        setImmediate = function() {
-            var handle = addFromSetImmediateArguments(arguments);
-            process.nextTick(partiallyApplied(runIfPresent, handle));
-            return handle;
-        };
-    }
     function canUsePostMessage() {
         // The test against `importScripts` prevents this implementation from being installed inside a web worker,
         // where `global.postMessage` means something completely different and can't be used for this purpose.
@@ -3751,8 +3720,6 @@ var h$nbi = BigInteger.nbi;
     }
     function installSetTimeoutImplementation() {
         // jsshell doesn't even have setTimeout
-        if(typeof setTimeout === 'undefined') setImmediate = function() { return null; };
-        else
           setImmediate = function() {
             var handle = addFromSetImmediateArguments(arguments);
             setTimeout(partiallyApplied(runIfPresent, handle), 0);
@@ -3763,10 +3730,6 @@ var h$nbi = BigInteger.nbi;
     var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
     attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
     // Don't get fooled by e.g. browserify environments.
-    if ({}.toString.call(global.process) === "[object process]") {
-        // For Node.js before 0.9
-        installNextTickImplementation();
-    } else
        if (canUsePostMessage()) {
         // For non-IE10 modern browsers
         installPostMessageImplementation();
@@ -6224,9 +6187,6 @@ function h$gcQuick(t) {
 }
 // run full marking for threads in h$blocked and h$threads, optionally t if t /= null
 function h$gc(t) {
-    // fixme, should enable again later when proper CAF management
-    // and retention of the standard handles in GHCJSi work
-    if(h$isGHCJSi) return;
     if(h$currentThread !== null) throw "h$gc: GC can only be run when no thread is running";
     ;
     h$resetRegisters();
@@ -6883,61 +6843,7 @@ function h$strerror(err) {
     if(err === 12456) {
  { h$ret1 = (0); return (h$encodeUtf8("operation unsupported on this platform")); };
     }
-    { h$ret1 = (0); return (h$encodeUtf8(h$errorStrs[err] || "unknown error")); };
-}
-function h$setErrno(e) {
-  ;
-  var es = e.toString();
-  var getErr = function() {
-      if(es.indexOf('ENOTDIR') !== -1) return 20;
-      if(es.indexOf('ENOENT') !== -1) return 2;
-      if(es.indexOf('EEXIST') !== -1) return 17;
-      if(es.indexOf('ENETUNREACH') !== -1) return 22; // fixme
-      if(es.indexOf('EPERM') !== -1) return 1;
-      if(es.indexOf('EMFILE') !== -1) return 24;
-      if(es.indexOf('EPIPE') !== -1) return 32;
-      if(es.indexOf('EAGAIN') !== -1) return 35;
-      if(es.indexOf('Bad argument') !== -1) return 2; // fixme?
-      throw ("setErrno not yet implemented: " + e);
-  }
-  h$errno = getErr();
-}
-var h$errorStrs = { 7: "too big"
-                   , CONST_EACCESS: "no access"
-                   , 22: "invalid"
-                   , 9: "bad file descriptor"
-                   , 20: "not a directory"
-                   , 2: "no such file or directory"
-                   , 1: "operation not permitted"
-                   , 17: "file exists"
-                   , 24: "too many open files"
-                   , 32: "broken pipe"
-                   , 35: "resource temporarily unavailable"
-                   }
-function h$handleErrno(r_err, f) {
-  try {
-    return f();
-  } catch(e) {
-    h$setErrno(e);
-    return r_err;
-  }
-}
-function h$handleErrnoS(r_err, r_success, f) {
-  try {
-    f();
-    return r_success;
-  } catch(e) {
-    h$setErrno(e);
-    return r_err;
-  }
-}
-function h$handleErrnoC(err, r_err, r_success, c) {
-    if(err) {
-        h$setErrno(err);
-        c(r_err);
-    } else {
-        c(r_success);
-    }
+    { h$ret1 = (0); return (h$encodeUtf8("unknown error")); };
 }
 /* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
@@ -8799,23 +8705,8 @@ function h$integer_negateInteger(i) {
 // set up debug logging for the current JS environment/engine
 // browser also logs to <div id="output"> if jquery is detected
 // the various debug tracing options use h$log
-var h$glbl;
-function h$getGlbl() { h$glbl = this; }
-h$getGlbl();
 function h$log() {
-  if(h$glbl) {
-    if(h$glbl.console && h$glbl.console.log) {
-      h$glbl.console.log.apply(h$glbl.console,arguments);
-    } else {
-      h$glbl.print.apply(this,arguments);
-    }
-  } else {
-    if(typeof console !== 'undefined') {
       console.log.apply(console, arguments);
-    } else if(typeof print !== 'undefined') {
-      print.apply(null, arguments);
-    }
-  }
 }
 function h$collectProps(o) {
   var props = [];
@@ -8825,17 +8716,7 @@ function h$collectProps(o) {
 // load the command line arguments in h$programArgs
 // the first element is the program name
 var h$programArgs;
-if(h$isNode) {
-    h$programArgs = process.argv.slice(1);
-} else if(h$isJsShell && typeof h$getGlobal(this).scriptArgs !== 'undefined') {
-    h$programArgs = h$getGlobal(this).scriptArgs.slice(0);
-    h$programArgs.unshift("a.js");
-} else if((h$isJsShell || h$isJsCore) && typeof h$getGlobal(this).arguments !== 'undefined') {
-    h$programArgs = h$getGlobal(this).arguments.slice(0);
-    h$programArgs.unshift("a.js");
-} else {
-    h$programArgs = [ "a.js" ];
-}
+h$programArgs = [ "a.js" ];
 function h$getProgArgv(argc_v,argc_off,argv_v,argv_off) {
   ;
   var c = h$programArgs.length;
@@ -8862,30 +8743,14 @@ function h$setProgArgv(n, ptr_d, ptr_o) {
   h$programArgs = args;
 }
 function h$getpid() {
-  if(h$isNode) return process.id;
   return 0;
 }
 function h$__hscore_environ() {
     ;
-    if(h$isNode) {
-        var env = [], i;
-        for(i in process.env) env.push(i + '=' + process.env[i]);
-        if(env.length === 0) return null;
-        var p = h$newByteArray(4*env.length+1);
-        p.arr = [];
-        for(i=0;i<env.length;i++) p.arr[4*i] = [h$encodeUtf8(env[i]), 0];
-        p.arr[4*env.length] = [null, 0];
-        { h$ret1 = (0); return (p); };
-    }
     { h$ret1 = (0); return (null); };
 }
 function h$getenv(name, name_off) {
     ;
-    if(h$isNode) {
-        var n = h$decodeUtf8z(name, name_off);
-        if(typeof process.env[n] !== 'undefined')
-            { h$ret1 = (0); return (h$encodeUtf8(process.env[n])); };
-    }
     { h$ret1 = (0); return (null); };
 }
 function h$errorBelch() {
@@ -8899,36 +8764,14 @@ function h$debugBelch2(buf1, buf_offset1, buf2, buf_offset2) {
   h$errorMsg(h$decodeUtf8z(buf1, buf_offset1), h$decodeUtf8z(buf2, buf_offset2));
 }
 function h$errorMsg(pat) {
-  function stripTrailingNewline(xs) {
-    return xs.replace(/\r?\n$/, "");
-  }
   // poor man's vprintf
   var str = pat;
   for(var i=1;i<arguments.length;i++) {
     str = str.replace(/%s/, arguments[i]);
   }
-  if(h$isGHCJSi) {
-    // ignore message
-  } else if(h$isNode) {
-    process.stderr.write(str);
-  } else if (h$isJsShell && typeof printErr !== 'undefined') {
-    if(str.length) printErr(stripTrailingNewline(str));
-  } else if (h$isJsShell && typeof putstr !== 'undefined') {
-    putstr(str);
-  } else if (h$isJsCore) {
-    if(str.length) {
- if(h$base_stderrLeftover.val !== null) {
-     debug(h$base_stderrLeftover.val + stripTrailingNewline(str));
-     h$base_stderrLeftover.val = null;
- } else {
-     debug(stripTrailingNewline(str));
- }
-    }
-  } else {
     if(typeof console !== 'undefined') {
       console.log(str);
     }
-  }
 }
 // this needs to be imported with foreign import ccall safe/interruptible
 function h$performMajorGC() {
@@ -9661,15 +9504,12 @@ function h$scheduleMainLoop() {
     if(h$mainLoopImmediate) return;
     h$clearScheduleMainLoop();
     if(h$delayed.size() === 0) {
-        if(typeof setTimeout !== 'undefined') {
             ;
             h$mainLoopTimeout = setTimeout(h$mainLoop, h$gcInterval);
-        }
         return;
     }
     var now = Date.now();
     var delay = Math.min(Math.max(h$delayed.peekPrio()-now, 0), h$gcInterval);
-    if(typeof setTimeout !== 'undefined') {
         if(delay >= 1) {
             ;
             // node.js 0.10.30 has trouble with non-integral delays
@@ -9677,7 +9517,6 @@ function h$scheduleMainLoop() {
         } else {
             h$mainLoopImmediate = setImmediate(h$mainLoop);
         }
-    }
 }
 var h$animationFrameMainLoop = false;
 function h$clearScheduleMainLoop() {
@@ -9697,14 +9536,10 @@ function h$clearScheduleMainLoop() {
 function h$startMainLoop() {
     ;
     if(h$running) return;
-    if(typeof setTimeout !== 'undefined') {
         if(!h$mainLoopImmediate) {
             h$clearScheduleMainLoop();
             h$mainLoopImmediate = setImmediate(h$mainLoop);
         }
-    } else {
-        while(true) h$mainLoop();
-    }
 }
 var h$busyYield = 500;
 var h$schedQuantum = 25;
@@ -10074,9 +9909,6 @@ function h$main(a) {
   var t = new h$Thread();
   //TRACE_SCHEDULER("sched: starting main thread");
     t.stack[0] = h$doneMain_e;
-  if(!h$isBrowser && !h$isGHCJSi) {
-    t.stack[2] = h$baseZCGHCziTopHandlerzitopHandler;
-  }
   t.stack[4] = h$ap_1_0;
   t.stack[5] = h$flushStdout;
   t.stack[6] = h$return;
@@ -10090,13 +9922,7 @@ function h$main(a) {
   return t;
 }
 function h$doneMain() {
-  if(h$isGHCJSi) {
-    if(h$currentThread.stack) {
-      global.h$GHCJSi.done(h$currentThread);
-    }
-  } else {
     h$exitProcess(0);
-  }
   h$finishThread(h$currentThread);
   return h$reschedule;
 }
@@ -10108,23 +9934,11 @@ h$ThreadAbortedError.prototype.toString = function() {
   return "Thread aborted, exit code: " + this.code;
 }
 function h$exitProcess(code) {
-    if(h$isNode) {
- process.exit(code);
-    } else if(h$isJsShell) {
-        quit(code);
-    } else if(h$isJsCore) {
-        if(h$base_stdoutLeftover.val !== null) print(h$base_stdoutLeftover.val);
-        if(h$base_stderrLeftover.val !== null) debug(h$base_stderrLeftover.val);
-        // jsc does not support returning a nonzero value, print it instead
-        if(code !== 0) debug("GHCJS JSC exit status: " + code);
-        quit();
-    } else {
         if(h$currentThread) {
             h$finishThread(h$currentThread);
             h$stack = null;
             throw new h$ThreadAbortedError(code);
         }
-    }
 }
 // MVar support
 var h$mvarId = 0;
