@@ -1,24 +1,19 @@
 {pkgs ? import <nixpkgs> {}, stdenv ? pkgs.stdenv, lib ? pkgs.lib}:
 with pkgs.haskell.packages.ghcjs;
-# with pkgs.haskellPackages;
 let
   glualint-lib-src = pkgs.fetchgit {
     url = "https://github.com/FPtje/GLuaFixer.git";
-    rev = "e10fccccf5ea1c0993676c233dc0cefead68ec47";
-    sha256 = "02dwdc7p95zadmv8ymchs1vq395l92d9qqh33y42mv6cra5qbvq8";
+    rev = "c6308c2155c83a26218acab407652f7f5c3bc390";
+    sha256 = "1jnv65mlhqda8awfy00hn0d35h4xyyw05kii8yaza3yd45dgwxj1";
   };
 
-
-  glualint-lib = callPackage ../glualint { };
+  glualint-lib = callPackage glualint-lib-src { };
 
   drv = { mkDerivation, base, glualint-lib, stdenv, ghcjs-base
     , containers
     , reflex
     , reflex-dom
     , safe
-    # , aeson, array, bytestring, containers
-    # , directory, filemanip, filepath, ListLike, MissingH, mtl, parsec
-    # , pretty, uu-parsinglib, uuagc, uuagc-cabal, vector
     }:
     mkDerivation {
       pname = "glualint-web";
@@ -26,8 +21,6 @@ let
       src = ./.;
       isLibrary = false;
       isExecutable = true;
-      # extraLibraries = [glualint-lib];
-      libraryHaskellDepends = [uuagc uuagc-cabal];
       executableHaskellDepends = [
         base
         containers
@@ -36,9 +29,6 @@ let
         reflex
         reflex-dom
         safe
-        # aeson array base bytestring containers directory filemanip filepath
-        # ListLike MissingH mtl parsec pretty uu-parsinglib uuagc uuagc-cabal
-        # vector
       ];
       description = "Clientside web version of glualint";
       license = stdenv.lib.licenses.gpl2;
@@ -46,22 +36,3 @@ let
 in
 
 callPackage drv { inherit glualint-lib; }
-
-# mkDerivation {
-#   pname = "glualint-web";
-#   version = "0.1.0.0";
-#   src = ./.;
-#   isLibrary = false;
-#   isExecutable = true;
-#   executableHaskellDepends = [
-#     base
-#     uuagc
-#     uuagc-cabal
-#     glualint-lib
-#     # pkgs.haskell.compiler.ghcjs.ghcWithPackages [ glualint-lib base uuagc uuagc-cabal ghcjs-base ghcjs-dom ]
-#     ghcjs-base
-#     ghcjs-dom
-#   ];
-#   description = "Clientside web version of glualint";
-#   license = stdenv.lib.licenses.gpl2;
-# }
