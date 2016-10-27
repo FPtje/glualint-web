@@ -105,4 +105,5 @@ txtLuaInput setText =
     def
     & textAreaConfig_initialValue .~ "-- Put your Lua here\n"
     & textAreaConfig_attributes .~ (constDyn $ "style" =: "width: 100%; min-height: 500pt")
+    -- & textAreaConfig_attributes .~ (constDyn $ "id" =: "editor")
     & textAreaConfig_setValue .~ setText
