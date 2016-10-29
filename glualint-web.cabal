@@ -17,15 +17,25 @@ cabal-version:       >=1.10
 
 executable glualint-web
   main-is:             Main.hs
-  -- other-modules:
+  other-modules:
+    GLualintWeb.Editor
+
+  js-sources:
+    jsbits/editor.js
+
   -- other-extensions:
   build-depends:
       base >=4.8 && <4.9
     , containers
+    , dependent-sum
+    , ghcjs-base
+    , ghcjs-dom
+    , ghcjs-ffiqq
     , glualint-lib
     , reflex-dom
     , reflex
     , safe
+    , transformers
 
   hs-source-dirs:      src
   default-language:    Haskell2010

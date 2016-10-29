@@ -1,5 +1,7 @@
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Main where
 
@@ -11,9 +13,9 @@ import qualified "glualint-lib" GLua.Parser as P
 import qualified "glualint-lib" GLua.AG.PrettyPrint as PP
 import qualified "glualint-lib" GLuaFixer.AG.DarkRPRewrite as DarkRP
 import           "reflex-dom"   Reflex.Dom
-import qualified "containers"   Data.Map as M
 import           "base"         Data.List (intersperse)
 import           "base"         Control.Monad (void)
+import           "this"         GLualintWeb.Editor
 
 
 data LintStatus =
@@ -58,23 +60,26 @@ displayMessage (Warnings msgs) = prettyPrintMessages msgs
 displayMessage (SyntaxErrors msgs) = prettyPrintMessages msgs
 
 
+
+
 main :: IO ()
-main = mainWidget $ do
-  prettyPrintButton <- btnPrettyPrint
+main =
+  mainWidget $ do
+    prettyPrintButton <- btnPrettyPrint
 
-  rec
-      lintStatus <- mapDyn lintString $ _textArea_value t
-      lintResults <- mapDyn displayMessage lintStatus
-      prettyPrinted <- mapDyn prettyPrint $ _textArea_value t
+    rec
+        lintStatus <- mapDyn lintString $ cmValue t
+        lintResults <- mapDyn displayMessage lintStatus
+        prettyPrinted <- mapDyn prettyPrint $ cmValue t
 
-      let prettyPrintOnClick = tag (current prettyPrinted) prettyPrintButton
+        let prettyPrintOnClick = tag (current prettyPrinted) prettyPrintButton
 
-      statusMessage lintStatus
-      lintResultList lintResults
+        statusMessage lintStatus
+        lintResultList lintResults
 
-      t <- txtLuaInput prettyPrintOnClick
+        t <- codemirror (CodeMirrorConfig "-- Put your Lua here\n" "lua" "monokai" prettyPrintOnClick)
 
-  return ()
+    return ()
 
 
 -- | Pretty print button
@@ -97,13 +102,3 @@ statusMessage lintStatus =
 -- | Displays a list paragraphs with warnings and/or errors
 lintResultList :: (MonadWidget t m) => Dynamic t [String] -> m ()
 lintResultList lintResults = void $ el "div" $ simpleList lintResults (el "p" . dynText)
-
--- | Where you input your Lua
-txtLuaInput :: (MonadWidget t m) => Event t String -> m (TextArea t)
-txtLuaInput setText =
-  elAttr "div" (M.fromList [("style", "width: 100%; min-height: 500pt")]) $ textArea $
-    def
-    & textAreaConfig_initialValue .~ "-- Put your Lua here\n"
-    & textAreaConfig_attributes .~ (constDyn $ "style" =: "width: 100%; min-height: 500pt")
-    -- & textAreaConfig_attributes .~ (constDyn $ "id" =: "editor")
-    & textAreaConfig_setValue .~ setText

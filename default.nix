@@ -3,17 +3,21 @@ with pkgs.haskell.packages.ghcjs;
 let
   glualint-lib-src = pkgs.fetchgit {
     url = "https://github.com/FPtje/GLuaFixer.git";
-    rev = "c6308c2155c83a26218acab407652f7f5c3bc390";
-    sha256 = "1jnv65mlhqda8awfy00hn0d35h4xyyw05kii8yaza3yd45dgwxj1";
+    rev = "ff649cdbdfa9283f9bf106e2c1b0f59fc3c4bacb";
+    sha256 = "0crbqmry0x15qa6ifq3rpajr0s29zvf9ah9jbnfy9kkhss5zzlag";
   };
 
   glualint-lib = callPackage glualint-lib-src { };
 
   drv = { mkDerivation, base, glualint-lib, stdenv, ghcjs-base
+    , ghcjs-ffiqq
+    , ghcjs-dom
     , containers
+    , dependent-sum
     , reflex
     , reflex-dom
     , safe
+    , transformers
     }:
     mkDerivation {
       pname = "glualint-web";
@@ -24,11 +28,15 @@ let
       executableHaskellDepends = [
         base
         containers
+        dependent-sum
         ghcjs-base
+        ghcjs-ffiqq
+        ghcjs-dom
         glualint-lib
         reflex
         reflex-dom
         safe
+        transformers
       ];
       description = "Clientside web version of glualint";
       license = stdenv.lib.licenses.gpl2;
