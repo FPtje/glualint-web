@@ -21,3 +21,4 @@ cabal.project.local
 manifest.webapp
 out.stats
 result
+codemirror/*
