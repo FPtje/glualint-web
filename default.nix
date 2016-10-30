@@ -9,7 +9,13 @@ let
 
   glualint-lib = callPackage glualint-lib-src { };
 
-  drv = { mkDerivation, base, glualint-lib, stdenv, ghcjs-base
+  glualint-web-styles = callPackage ./styles { };
+
+  drv = { mkDerivation
+    , base
+    , glualint-lib
+    , stdenv
+    , ghcjs-base
     , ghcjs-ffiqq
     , ghcjs-dom
     , containers
@@ -40,6 +46,11 @@ let
       ];
       description = "Clientside web version of glualint";
       license = stdenv.lib.licenses.gpl2;
+
+      postInstall = ''
+        echo "Generating CSS file"
+        ${glualint-web-styles}/bin/glualint-web-styles > $out/bin/glualint-web.jsexe/styles.css
+      '';
     };
 in
 

@@ -64,20 +64,26 @@ displayMessage (SyntaxErrors msgs) = prettyPrintMessages msgs
 
 main :: IO ()
 main =
-  mainWidget $ do
-    prettyPrintButton <- btnPrettyPrint
+  mainWidget $ elId "div" "wrapper" $ do
 
     rec
-        lintStatus <- mapDyn lintString $ cmValue t
-        lintResults <- mapDyn displayMessage lintStatus
-        prettyPrinted <- mapDyn prettyPrint $ cmValue t
+        ppOnClick <- elId "div" "header" $ do
+          prettyPrintButton <- btnPrettyPrint
+          lintStatus <- mapDyn lintString $ cmValue t
+          lintResults <- mapDyn displayMessage lintStatus
+          prettyPrinted <- mapDyn prettyPrint $ cmValue t
 
-        let prettyPrintOnClick = tag (current prettyPrinted) prettyPrintButton
+          let prettyPrintOnClick = tag (current prettyPrinted) prettyPrintButton
 
-        statusMessage lintStatus
-        lintResultList lintResults
+          statusMessage lintStatus
+          lintResultList lintResults
 
-        t <- codemirror (CodeMirrorConfig "-- Put your Lua here\n" "lua" "monokai" prettyPrintOnClick)
+          return prettyPrintOnClick
+
+        -- codemirror will be added as child to this div later
+        elId "div" "content" $ return ()
+
+        t <- codemirror (CodeMirrorConfig "-- Put your Lua here\n" "lua" "monokai" ppOnClick)
 
     return ()
 
@@ -102,3 +108,7 @@ statusMessage lintStatus =
 -- | Displays a list paragraphs with warnings and/or errors
 lintResultList :: (MonadWidget t m) => Dynamic t [String] -> m ()
 lintResultList lintResults = void $ el "div" $ simpleList lintResults (el "p" . dynText)
+
+-- | Helper function: element with id
+elId :: forall t m a. MonadWidget t m => String -> String -> m a -> m a
+elId elementTag i = elWith elementTag $ def & attributes .~ "id" =: i
