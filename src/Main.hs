@@ -1,7 +1,8 @@
 {-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Main where
 
@@ -14,7 +15,10 @@ import qualified "glualint-lib" GLua.AG.PrettyPrint as PP
 import qualified "glualint-lib" GLuaFixer.AG.DarkRPRewrite as DarkRP
 import           "reflex-dom"   Reflex.Dom
 import           "base"         Data.List (intersperse)
-import           "base"         Control.Monad (void)
+import           "base"         Control.Concurrent (takeMVar, putMVar, MVar, newEmptyMVar, forkIOWithUnmask, ThreadId, killThread, forkIO, threadDelay)
+import           "base"         Control.Exception (mask_, AsyncException, catch)
+import           "base"         Control.Monad (void, forever)
+import           "transformers" Control.Monad.IO.Class (liftIO)
 import           "this"         GLualintWeb.Editor
 
 
@@ -60,16 +64,56 @@ displayMessage (Warnings msgs) = prettyPrintMessages msgs
 displayMessage (SyntaxErrors msgs) = prettyPrintMessages msgs
 
 
+-- | Does the linter work in a separate thread
+lintWorker :: MVar String -> IO (ThreadId, MVar LintStatus)
+lintWorker mvCode = do
+    mvLintResults <- newEmptyMVar
+
+    worker <- mask_ $ forkIOWithUnmask $ \unmask -> forever $ unmask (work mvLintResults) `catch` \(_ :: AsyncException) -> return ()
+
+    return (worker, mvLintResults)
+  where
+    work :: MVar LintStatus -> IO ()
+    work mvLintResults = do
+      code <- takeMVar mvCode
+
+      -- Wait 250 ms before starting to lint
+      -- Linting is still heavy, even in another thread.
+      threadDelay 250000
+
+      let !linted = lintString code
+      putMVar mvLintResults linted
+      return ()
+
+
+-- | Takes an event holding the text to lint
+-- Returns the lint messages
+lintASync :: (MonadWidget t m) => MVar String -> MVar LintStatus -> ThreadId -> Event t String -> m (Event t LintStatus)
+lintASync input result workerId src = performEventAsync $ ffor src $ \strCode throwEvent -> do
+  void $ liftIO $ do
+    killThread workerId
+
+    putMVar input strCode
+
+    forkIO $ throwEvent =<< takeMVar result
+
+  return ()
 
 
 main :: IO ()
-main =
+main = do
+  -- Start the worker
+  mvCode <- newEmptyMVar
+  (workerId, mvLintResults) <- lintWorker mvCode
+
   mainWidget $ elId "div" "wrapper" $ do
 
     rec
         ppOnClick <- elId "div" "header" $ do
           prettyPrintButton <- btnPrettyPrint
-          lintStatus <- mapDyn lintString $ cmValue t
+          onLinted <- lintASync mvCode mvLintResults workerId (updated $ cmValue t)
+          lintStatus <- holdDyn Good onLinted
+
           lintResults <- mapDyn displayMessage lintStatus
           prettyPrinted <- mapDyn prettyPrint $ cmValue t
 
