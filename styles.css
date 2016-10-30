@@ -1,0 +1,44 @@
+
+body,
+html
+{
+  background  : rgb(39,40,34);
+  color       : rgb(208,208,208);
+  font-family : "monospace", monospace;
+  font-size   : 10pt;
+  height      : 100%;
+  margin      : 0px 0px 0px 0px;
+}
+
+#wrapper
+{
+  height        : 100%;
+  padding-left  : 5pt;
+  padding-right : 5pt;
+}
+
+#wrapper :before
+{
+  content : "";
+  float   : left;
+  height  : 100%;
+}
+
+#content
+{
+  height : auto;
+}
+
+#content :after
+{
+  content : "";
+  clear   : both;
+}
+
+.CodeMirror
+{
+  height : auto;
+}
+
+
+/* Generated with Clay, http://fvisser.nl/clay */

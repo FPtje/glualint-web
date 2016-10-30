@@ -20,3 +20,6 @@ cabal.project.local
 .HTF/
 manifest.webapp
 out.stats
+result
+styles/*
+codemirror/*
