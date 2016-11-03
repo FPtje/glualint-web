@@ -14,6 +14,21 @@ monokaiBackground = rgb 39 40 34
 monokaiText :: Color
 monokaiText = rgb 208 208 208
 
+warningBackground :: Color
+warningBackground = rgb 246 167 63
+
+errorBackground :: Color
+errorBackground = rgb 248 66 49
+
+genericMessage :: Css
+genericMessage = do
+  let s = pt 2
+  padding s s s s
+  fontWeight bold
+
+  borderRadius s s s s
+  color white
+
 styleSheet :: Css
 styleSheet = do
   (body <> html) ? do
@@ -43,4 +58,12 @@ styleSheet = do
 
   ".CodeMirror" ?
     height auto
+
+  "a.Warning" ? do
+    background warningBackground
+    genericMessage
+
+  "a.Error" ? do
+    background errorBackground
+    genericMessage
 

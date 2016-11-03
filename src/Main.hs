@@ -6,6 +6,7 @@
 
 module Main where
 
+import           "glualint-lib" GLua.AG.Token (Region(..))
 import qualified "glualint-lib" GLuaFixer.LintSettings as Settings
 import qualified "glualint-lib" GLuaFixer.AG.ASTLint as Lint
 import           "glualint-lib" GLuaFixer.LintMessage (LintMessage (..), sortLintMessages)
@@ -14,12 +15,13 @@ import qualified "glualint-lib" GLua.Parser as P
 import qualified "glualint-lib" GLua.AG.PrettyPrint as PP
 import qualified "glualint-lib" GLuaFixer.AG.DarkRPRewrite as DarkRP
 import           "reflex-dom"   Reflex.Dom
-import           "base"         Data.List (intersperse)
 import           "base"         Control.Concurrent (takeMVar, putMVar, MVar, newEmptyMVar, forkIOWithUnmask, ThreadId, killThread, forkIO, threadDelay)
 import           "base"         Control.Exception (mask_, AsyncException, catch)
 import           "base"         Control.Monad (void, forever)
 import           "transformers" Control.Monad.IO.Class (liftIO)
+import qualified "containers"   Data.Map as M
 import           "this"         GLualintWeb.Editor
+import           "uu-parsinglib"  Text.ParserCombinators.UU.BasicInstances (LineColPos (..))
 
 
 data LintStatus =
@@ -55,13 +57,21 @@ prettyPrint lua =
     pretty
 
 
-prettyPrintMessages :: [LintMessage] -> [String]
-prettyPrintMessages = intersperse "\n" . map show . sortLintMessages
+prettyPrintMessage :: LintMessage -> String
+prettyPrintMessage lm =
+  case lm of
+    LintError (Region (LineColPos l c _) _) msg _ -> pretty l c msg
+    LintWarning (Region (LineColPos l c _) _) msg _ -> pretty l c msg
 
-displayMessage :: LintStatus -> [String]
+  where
+    pretty :: Int -> Int -> String -> String
+    pretty l c msg = "Line " ++ show l ++ ":" ++ show c ++ ": " ++ msg
+
+
+displayMessage :: LintStatus -> [LintMessage]
 displayMessage Good = []
-displayMessage (Warnings msgs) = prettyPrintMessages msgs
-displayMessage (SyntaxErrors msgs) = prettyPrintMessages msgs
+displayMessage (Warnings msgs) = sortLintMessages msgs
+displayMessage (SyntaxErrors msgs) = sortLintMessages msgs
 
 
 -- | Does the linter work in a separate thread
@@ -157,8 +167,22 @@ statusMessage lintStatus =
     el "p" $ dynText txt
 
 -- | Displays a list paragraphs with warnings and/or errors
-lintResultList :: (MonadWidget t m) => Dynamic t [String] -> m ()
-lintResultList lintResults = void $ el "div" $ simpleList lintResults (el "p" . dynText)
+lintResultList :: (MonadWidget t m) => Dynamic t [LintMessage] -> m ()
+lintResultList lintResults = void $ el "div" $ simpleList lintResults $ \lm ->
+  el "p" $ do
+    tpe <- mapDyn lmType lm
+    lmClass <- mapDyn (\c -> M.singleton "class" c) tpe
+    elDynAttr "a" lmClass $ dynText tpe
+
+    text " "
+
+    txt <- mapDyn prettyPrintMessage lm
+    dynText txt
+
+  where
+    lmType :: LintMessage -> String
+    lmType LintError {} = "Error"
+    lmType LintWarning {} = "Warning"
 
 -- | Helper function: element with id
 elId :: forall t m a. MonadWidget t m => String -> String -> m a -> m a
