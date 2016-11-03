@@ -3,6 +3,8 @@
 
 module GLualintWeb.Editor where
 
+import           "glualint-lib"   GLua.AG.Token (Region(..))
+import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..))
 import qualified "ghcjs-base"     Data.JSString as JS
 import qualified "ghcjs-base"     GHCJS.Concurrent as C
 import qualified "ghcjs-base"     GHCJS.Foreign.Callback as F
@@ -16,6 +18,7 @@ import           "reflex"         Reflex.Host.Class
 import           "transformers"   Control.Monad.IO.Class (liftIO, MonadIO)
 import           "dependent-sum"  Data.Dependent.Sum (DSum (..))
 import           "base"           Data.Functor.Identity
+import           "uu-parsinglib"  Text.ParserCombinators.UU.BasicInstances (LineColPos (..))
 
 
 data CodeMirror t = CodeMirror
@@ -31,7 +34,6 @@ data CodeMirrorConfig t = CodeMirrorConfig
   }
 
 
-
 createCodeMirror :: JS.JSString -> JS.JSString -> JS.JSString -> IO ()
 createCodeMirror initValue mode theme = [js_|createCodeMirror(`initValue, `mode, `theme)|]
 
@@ -44,6 +46,19 @@ cmGetText = liftIO $ [js| editor.getValue() |]
 cmGetEditor :: (MonadIO m) => m JS.GObject
 cmGetEditor = liftIO [js| getEditor() |]
 
+cmAddLintMessage :: (MonadIO m) => LintMessage -> m ()
+cmAddLintMessage lm =
+  case lm of
+    (LintError (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
+        liftIO [js_| addLintMessage(`ls, `cs, `le, `ce, 'error', `msg) |]
+    (LintWarning (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
+        liftIO [js_| addLintMessage(`ls, `cs, `le, `ce, 'warning', `msg) |]
+
+cmResetLintMessages :: (MonadIO m) => m ()
+cmResetLintMessages = liftIO [js_| resetMessages() |]
+
+cmRefresh :: (MonadIO m) => m ()
+cmRefresh = liftIO [js_| cmRefresh() |]
 
 foreign import javascript unsafe
   "createOnEvent($1, $2)"

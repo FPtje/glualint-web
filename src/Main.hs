@@ -83,7 +83,14 @@ lintWorker mvCode = do
 
       let !linted = lintString code
       putMVar mvLintResults linted
-      return ()
+
+      -- Send lint results to CodeMirror
+      cmResetLintMessages
+      case linted of
+        Good -> return ()
+        Warnings msgs -> mapM_ cmAddLintMessage msgs
+        SyntaxErrors msgs -> mapM_ cmAddLintMessage msgs
+      cmRefresh
 
 
 -- | Takes an event holding the text to lint

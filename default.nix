@@ -24,6 +24,7 @@ let
     , reflex-dom
     , safe
     , transformers
+    , uu-parsinglib
     }:
     mkDerivation {
       pname = "glualint-web";
@@ -43,6 +44,7 @@ let
         reflex-dom
         safe
         transformers
+        uu-parsinglib
       ];
       description = "Clientside web version of glualint";
       license = stdenv.lib.licenses.gpl2;
