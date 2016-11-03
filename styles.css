@@ -40,5 +40,23 @@ html
   height : auto;
 }
 
+a.Warning
+{
+  background    : rgb(246,167,63);
+  padding       : 2pt 2pt 2pt 2pt;
+  font-weight   : bold;
+  border-radius : 2pt 2pt 2pt 2pt;
+  color         : rgb(255,255,255);
+}
+
+a.Error
+{
+  background    : rgb(248,66,49);
+  padding       : 2pt 2pt 2pt 2pt;
+  font-weight   : bold;
+  border-radius : 2pt 2pt 2pt 2pt;
+  color         : rgb(255,255,255);
+}
+
 
 /* Generated with Clay, http://fvisser.nl/clay */
