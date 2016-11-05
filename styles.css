@@ -6,8 +6,36 @@ html
   color       : rgb(208,208,208);
   font-family : "monospace", monospace;
   font-size   : 10pt;
-  height      : 100%;
   margin      : 0px 0px 0px 0px;
+}
+
+#prettyPrintButton
+{
+  font-family      : "monospace", monospace;
+  position         : fixed;
+  right            : 5pt;
+  top              : 5pt;
+  padding          : 5pt 5pt 5pt 5pt;
+  color            : rgb(208,208,208);
+  border-color     : rgb(37,37,37);
+  background       : rgb(65,65,65);
+  background-image : -webkit-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : -moz-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : -ms-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : -o-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  border-radius    : 4pt 4pt 4pt 4pt;
+  z-index          : 10;
+}
+
+#prettyPrintButton:hover
+{
+  border-color : rgb(100,100,100);
+}
+
+#prettyPrintButton:focus
+{
+  outline : solid 0pt rgb(0,0,0);
 }
 
 #wrapper
@@ -22,6 +50,29 @@ html
   content : "";
   float   : left;
   height  : 100%;
+}
+
+a.lintMessage
+{
+  -webkit-user-select : none;
+  -moz-user-select    : none;
+  -ms-user-select     : none;
+  -o-user-select      : none;
+  user-select         : none;
+  cursor              : pointer;
+}
+
+a.lintMessage:hover
+{
+  padding          : 5pt 5pt 5pt 5pt;
+  border-color     : rgb(37,37,37);
+  background       : rgb(65,65,65);
+  background-image : -webkit-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : -moz-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : -ms-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : -o-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  background-image : linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  border-radius    : 4pt 4pt 4pt 4pt;
 }
 
 #content
