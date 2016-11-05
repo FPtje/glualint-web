@@ -123,35 +123,38 @@ main = do
   mvCode <- newEmptyMVar
   (workerId, mvLintResults) <- lintWorker mvCode
 
-  mainWidget $ elId "div" "wrapper" $ do
+  mainWidget $ do
+    prettyPrintButton <- btnPrettyPrint
+    elId "div" "wrapper" $ do
 
-    rec
-        ppOnClick <- elId "div" "header" $ do
-          prettyPrintButton <- btnPrettyPrint
-          onLinted <- lintASync mvCode mvLintResults workerId (updated $ cmValue t)
-          lintStatus <- holdDyn Good onLinted
+      rec
+          ppOnClick <- elId "div" "header" $ do
+            onLinted <- lintASync mvCode mvLintResults workerId (updated $ cmValue t)
+            lintStatus <- holdDyn Good onLinted
 
-          lintResults <- mapDyn displayMessage lintStatus
-          prettyPrinted <- mapDyn prettyPrint $ cmValue t
+            lintResults <- mapDyn displayMessage lintStatus
+            prettyPrinted <- mapDyn prettyPrint $ cmValue t
 
-          let prettyPrintOnClick = tag (current prettyPrinted) prettyPrintButton
+            let prettyPrintOnClick = tag (current prettyPrinted) prettyPrintButton
 
-          statusMessage lintStatus
-          lintResultList lintResults
+            statusMessage lintStatus
+            lintResultList lintResults
 
-          return prettyPrintOnClick
+            return prettyPrintOnClick
 
-        -- codemirror will be added as child to this div later
-        elId "div" "content" $ return ()
+          -- codemirror will be added as child to this div later
+          elId "div" "content" $ return ()
 
-        t <- codemirror (CodeMirrorConfig "-- Put your Lua here\n" "lua" "monokai" ppOnClick)
+          t <- codemirror (CodeMirrorConfig "-- Put your Lua here\n" "lua" "monokai" ppOnClick)
 
-    return ()
+      return ()
 
 
 -- | Pretty print button
 btnPrettyPrint :: MonadWidget t m => m (Event t ())
-btnPrettyPrint = button "Pretty print"
+btnPrettyPrint = do
+  (e, _) <- elAttr' "button" (M.fromList [("type", "button"), ("id", "prettyPrintButton")]) $ text "Pretty print"
+  return $ domEvent Click e
 
 -- | Status message
 statusMessage :: (MonadWidget t m) => Dynamic t LintStatus -> m ()
