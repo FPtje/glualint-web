@@ -60,6 +60,10 @@ cmResetLintMessages = liftIO [js_| resetMessages() |]
 cmRefresh :: (MonadIO m) => m ()
 cmRefresh = liftIO [js_| cmRefresh() |]
 
+cmSelectRegion :: (MonadIO m) => Region -> m ()
+cmSelectRegion (Region (LineColPos ls cs _) (LineColPos le ce _)) =
+  liftIO [js_| cmSelectRegion(`ls, `cs, `le, `ce) |]
+
 foreign import javascript unsafe
   "createOnEvent($1, $2)"
   cmAddCallback :: JS.JSString -> F.Callback (IO ()) -> IO ()

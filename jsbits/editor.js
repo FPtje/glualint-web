@@ -42,3 +42,20 @@ function cmRefresh()
 {
   editor.refresh();
 }
+
+function cmSelectRegion(lineStart, columnStart, lineEnd, columnEnd)
+{
+  editor.setSelection(
+    { line: lineStart
+    , ch: columnStart
+    }
+  , { line: lineEnd
+    , ch: columnEnd
+    }
+  );
+
+  coords = editor.charCoords({line: lineStart, ch: columnStart})
+  window.scrollTo(0, coords.top)
+
+  editor.focus();
+}

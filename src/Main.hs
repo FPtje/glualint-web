@@ -18,7 +18,7 @@ import           "reflex-dom"   Reflex.Dom
 import           "base"         Control.Concurrent (takeMVar, putMVar, MVar, newEmptyMVar, forkIOWithUnmask, ThreadId, killThread, forkIO, threadDelay)
 import           "base"         Control.Exception (mask_, AsyncException, catch)
 import           "base"         Control.Monad (void, forever)
-import           "transformers" Control.Monad.IO.Class (liftIO)
+import           "transformers" Control.Monad.IO.Class (liftIO, MonadIO)
 import qualified "containers"   Data.Map as M
 import           "this"         GLualintWeb.Editor
 import           "uu-parsinglib"  Text.ParserCombinators.UU.BasicInstances (LineColPos (..))
@@ -60,12 +60,12 @@ prettyPrint lua =
 prettyPrintMessage :: LintMessage -> String
 prettyPrintMessage lm =
   case lm of
-    LintError (Region (LineColPos l c _) _) msg _ -> pretty l c msg
-    LintWarning (Region (LineColPos l c _) _) msg _ -> pretty l c msg
+    LintError (Region (LineColPos l _ _) _) msg _ -> pretty l msg
+    LintWarning (Region (LineColPos l _ _) _) msg _ -> pretty l msg
 
   where
-    pretty :: Int -> Int -> String -> String
-    pretty l c msg = "Line " ++ show l ++ ":" ++ show c ++ ": " ++ msg
+    pretty :: Int -> String -> String
+    pretty l msg = "Line " ++ show (succ l) ++ ": " ++ msg
 
 
 displayMessage :: LintStatus -> [LintMessage]
@@ -113,8 +113,6 @@ lintASync input result workerId src = performEventAsync $ ffor src $ \strCode th
     putMVar input strCode
 
     forkIO $ throwEvent =<< takeMVar result
-
-  return ()
 
 
 main :: IO ()
@@ -169,10 +167,15 @@ statusMessage lintStatus =
 
     el "p" $ dynText txt
 
+-- | Select the region of a warning or error message
+selectWarning :: (MonadIO m) => LintMessage -> m ()
+selectWarning (LintError rg _ _) = cmSelectRegion rg
+selectWarning (LintWarning rg _ _) = cmSelectRegion rg
+
 -- | Displays a list paragraphs with warnings and/or errors
 lintResultList :: (MonadWidget t m) => Dynamic t [LintMessage] -> m ()
-lintResultList lintResults = void $ el "div" $ simpleList lintResults $ \lm ->
-  el "p" $ do
+lintResultList lintResults = void $ el "div" $ simpleList lintResults $ \lm -> el "p" $ do
+  (e, _) <- elAttr' "a" (M.singleton "class" "lintMessage") $ do
     tpe <- mapDyn lmType lm
     lmClass <- mapDyn (\c -> M.singleton "class" c) tpe
     elDynAttr "a" lmClass $ dynText tpe
@@ -181,6 +184,10 @@ lintResultList lintResults = void $ el "div" $ simpleList lintResults $ \lm ->
 
     txt <- mapDyn prettyPrintMessage lm
     dynText txt
+
+  let onMessageClicked = domEvent Click e
+  let selectWarningOnClick = fmap (selectWarning) (tagDyn lm onMessageClicked)
+  performEvent_ selectWarningOnClick
 
   where
     lmType :: LintMessage -> String

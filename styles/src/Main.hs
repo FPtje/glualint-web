@@ -43,6 +43,10 @@ genericMessage = do
   borderRadius bordersize bordersize bordersize bordersize
   color white
 
+buttonGradient :: Css
+buttonGradient =
+  backgroundImage $ linearGradient (straight sideTop) [(buttonBackgroundEdge, pct 0), (buttonBackground, pct 50), (buttonBackgroundEdge, pct 100)]
+
 styleSheet :: Css
 styleSheet = do
   (body <> html) ? do
@@ -63,7 +67,8 @@ styleSheet = do
     color monokaiText
     borderColor buttonBorder
     background buttonBackground
-    backgroundImage $ linearGradient (straight sideTop) [(buttonBackgroundEdge, pct 0), (buttonBackground, pct 50), (buttonBackgroundEdge, pct 100)]
+    buttonGradient
+
     borderRadius (pt 4) (pt 4) (pt 4) (pt 4)
     zIndex 10
 
@@ -83,6 +88,18 @@ styleSheet = do
       content $  stringContent ""
       float      floatLeft
       height  $  pct 100
+
+  "a.lintMessage" ? do
+    userSelect none
+    cursor pointer
+
+  "a.lintMessage:hover" ? do
+    padding (pt 5) (pt 5) (pt 5) (pt 5)
+    borderColor buttonBorder
+    background buttonBackground
+    buttonGradient
+    borderRadius (pt 4) (pt 4) (pt 4) (pt 4)
+
 
   "#content" ? do
     height $ auto
