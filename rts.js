@@ -3745,7 +3745,7 @@ var h$nbi = BigInteger.nbi;
     }
     attachTo.setImmediate = setImmediate;
     attachTo.clearImmediate = clearImmediate;
-}(this));
+}(h$getGlobal(this)));
 /* Copyright (C) 1991-2016 Free Software Foundation, Inc.
    This file is part of the GNU C Library.
 
@@ -8706,7 +8706,11 @@ function h$integer_negateInteger(i) {
 // browser also logs to <div id="output"> if jquery is detected
 // the various debug tracing options use h$log
 function h$log() {
-      console.log.apply(console, arguments);
+  try {
+        console.log.apply(console, arguments);
+  } catch(ex) {
+    // ignore console.log exceptions (for example for IE9 when console is closed)
+  }
 }
 function h$collectProps(o) {
   var props = [];
@@ -19721,7 +19725,7 @@ function h$ap_gen()
           var h$RTS_531 = h$paps[h$RTS_525];
           var h$RTS_532 = [h$r1, (((((h$RTS_521.a >> 8) - h$RTS_525) * 256) + h$RTS_523) - h$RTS_524)];
           for(var h$RTS_533 = 0;(h$RTS_533 < h$RTS_525);(h$RTS_533++)) {
-            h$RTS_532.push(h$stack[((h$sp - h$RTS_533) - 1)]);
+            h$RTS_532.push(h$stack[((h$sp - h$RTS_533) - 2)]);
           };
           h$sp = ((h$sp - h$RTS_525) - 2);
           h$r1 = h$init_closure({ d1: null, d2: null, f: h$RTS_531, m: 0
@@ -19769,7 +19773,7 @@ function h$ap_gen()
           var h$RTS_543 = h$paps[h$RTS_537];
           var h$RTS_544 = [h$r1, (((((h$r1.d2.d1 >> 8) - h$RTS_537) * 256) + h$RTS_535) - h$RTS_536)];
           for(var h$RTS_545 = 0;(h$RTS_545 < h$RTS_537);(h$RTS_545++)) {
-            h$RTS_544.push(h$stack[((h$sp - h$RTS_545) - 1)]);
+            h$RTS_544.push(h$stack[((h$sp - h$RTS_545) - 2)]);
           };
           h$sp = ((h$sp - h$RTS_537) - 2);
           h$r1 = h$init_closure({ d1: null, d2: null, f: h$RTS_543, m: 0

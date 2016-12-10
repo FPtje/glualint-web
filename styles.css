@@ -2,8 +2,8 @@
 body,
 html
 {
-  background  : rgb(39,40,34);
-  color       : rgb(208,208,208);
+  background  : #272822;
+  color       : #d0d0d0;
   font-family : "monospace", monospace;
   font-size   : 10pt;
   margin      : 0px 0px 0px 0px;
@@ -16,26 +16,26 @@ html
   right            : 5pt;
   top              : 5pt;
   padding          : 5pt 5pt 5pt 5pt;
-  color            : rgb(208,208,208);
-  border-color     : rgb(37,37,37);
-  background       : rgb(65,65,65);
-  background-image : -webkit-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : -moz-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : -ms-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : -o-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  color            : #d0d0d0;
+  border-color     : #252525;
+  background       : #414141;
+  background-image : -webkit-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : -moz-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : -ms-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : -o-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
   border-radius    : 4pt 4pt 4pt 4pt;
   z-index          : 10;
 }
 
 #prettyPrintButton:hover
 {
-  border-color : rgb(100,100,100);
+  border-color : #646464;
 }
 
 #prettyPrintButton:focus
 {
-  outline : solid 0pt rgb(0,0,0);
+  outline : solid 0pt #000000;
 }
 
 #wrapper
@@ -65,13 +65,13 @@ a.lintMessage
 a.lintMessage:hover
 {
   padding          : 5pt 5pt 5pt 5pt;
-  border-color     : rgb(37,37,37);
-  background       : rgb(65,65,65);
-  background-image : -webkit-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : -moz-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : -ms-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : -o-linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
-  background-image : linear-gradient(top,rgb(75,75,75) 0%,rgb(65,65,65) 50%,rgb(75,75,75) 100%);
+  border-color     : #252525;
+  background       : #414141;
+  background-image : -webkit-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : -moz-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : -ms-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : -o-linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
+  background-image : linear-gradient(top,#4b4b4b 0%,#414141 50%,#4b4b4b 100%);
   border-radius    : 4pt 4pt 4pt 4pt;
 }
 
@@ -93,20 +93,20 @@ a.lintMessage:hover
 
 a.Warning
 {
-  background    : rgb(246,167,63);
+  background    : #f6a73f;
   padding       : 2pt 2pt 2pt 2pt;
   font-weight   : bold;
   border-radius : 2pt 2pt 2pt 2pt;
-  color         : rgb(255,255,255);
+  color         : #ffffff;
 }
 
 a.Error
 {
-  background    : rgb(248,66,49);
+  background    : #f84231;
   padding       : 2pt 2pt 2pt 2pt;
   font-weight   : bold;
   border-radius : 2pt 2pt 2pt 2pt;
-  color         : rgb(255,255,255);
+  color         : #ffffff;
 }
 
 
