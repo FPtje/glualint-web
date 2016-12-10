@@ -1,10 +1,19 @@
 {pkgs ? import <nixpkgs> {}, stdenv ? pkgs.stdenv, lib ? pkgs.lib}:
-with pkgs.haskell.packages.ghcjs;
 let
-  glualint-lib-src = pkgs.fetchgit {
+  # Pin nixpkgs version down by default, but allow building with another version
+  nixpkgs = import (pkgs.fetchgit {
+    url = "https://github.com/NixOS/nixpkgs.git";
+    rev = "af0fec6d0a3e28c815e38296f3758e7d0916eba9";
+    sha256 = "0knbmva5bmilhz4w3xi55dg22m7g44viawxa5n5x228av3bcmy5i";
+  }) {};
+in
+with nixpkgs.haskell.packages.ghcjs;
+let
+
+  glualint-lib-src = nixpkgs.fetchgit {
     url = "https://github.com/FPtje/GLuaFixer.git";
-    rev = "ff649cdbdfa9283f9bf106e2c1b0f59fc3c4bacb";
-    sha256 = "0crbqmry0x15qa6ifq3rpajr0s29zvf9ah9jbnfy9kkhss5zzlag";
+    rev = "ff96c8e0ede9965c3fa9c16708df380870732685";
+    sha256 = "0kii6jcqzgrxqnsw6hvhxaqrvxklhbrb7mvkb4an6zkidrg3k8fa";
   };
 
   glualint-lib = callPackage glualint-lib-src { };
