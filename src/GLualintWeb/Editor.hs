@@ -1,91 +1,172 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module GLualintWeb.Editor where
 
+import           "base"           Control.Monad
+import           "lens"           Control.Lens
 import           "glualint-lib"   GLua.AG.Token (Region(..))
 import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..))
 import qualified "ghcjs-base"     Data.JSString as JS
-import qualified "ghcjs-base"     GHCJS.Concurrent as C
-import qualified "ghcjs-base"     GHCJS.Foreign.Callback as F
-import qualified "ghcjs-dom"      GHCJS.DOM.Types as JS
-import           "ghcjs-ffiqq"    GHCJS.Foreign.QQ
-
-import           "reflex-dom"     Reflex.Dom.Class
-
-import           "reflex"         Reflex
-import           "reflex"         Reflex.Host.Class
-import           "transformers"   Control.Monad.IO.Class (liftIO, MonadIO)
-import           "dependent-sum"  Data.Dependent.Sum (DSum (..))
-import           "base"           Data.Functor.Identity
-import           "uu-parsinglib"  Text.ParserCombinators.UU.BasicInstances (LineColPos (..))
+import qualified "ghcjs-base"     GHCJS.Foreign.Callback as JSCallback
+import           "ghcjs-base"     GHCJS.Foreign.Callback ( Callback )
+import           "ghcjs-base"     GHCJS.Types ( IsJSVal, JSVal, jsval )
+import qualified "miso"            Miso
+import           "miso"            Miso.Html
+import qualified "miso"            Miso.String as Miso
+import           "uu-parsinglib"   Text.ParserCombinators.UU.BasicInstances (LineColPos (..))
 
 
-data CodeMirror t = CodeMirror
-  { cmValue :: Dynamic t String
-  }
+data Model
+   = Model
+     { _mCodeMirror :: !(Maybe CodeMirrorWidget)
+     } deriving (Eq)
 
+newtype CodeMirrorWidget = CodeMirrorWidget JSVal
+instance IsJSVal CodeMirrorWidget
 
-data CodeMirrorConfig t = CodeMirrorConfig
-  { cmcInitialText :: JS.JSString
-  , cmcMode :: JS.JSString
-  , cmcTheme :: JS.JSString
-  , cmcSetText :: Event t String
-  }
+instance Eq CodeMirrorWidget where
+  _ == _ = True
 
+initialModel :: Model
+initialModel =
+    Model
+    { _mCodeMirror = Nothing
+    }
 
-createCodeMirror :: JS.JSString -> JS.JSString -> JS.JSString -> IO ()
-createCodeMirror initValue mode theme = [js_|createCodeMirror(`initValue, `mode, `theme)|]
+data Interface action
+   = Interface
+     { uniqueId   :: !Miso.MisoString
+     , passAction :: Action -> action
+     , onChanged  :: JS.JSString -> action
+     }
 
-cmSetText :: JS.JSString -> IO ()
-cmSetText str = [js_| editor.setValue(`str) |]
+data Action
+   = OnCreated
+   | WidgetCreated !CodeMirrorWidget
+   | SetValue !String
+   | SetLintMessages ![LintMessage]
+   | SelectRegion !Region
 
-cmGetText :: (MonadIO m) => m String
-cmGetText = liftIO $ [js| editor.getValue() |]
+makeLenses ''Model
 
-cmGetEditor :: (MonadIO m) => m JS.GObject
-cmGetEditor = liftIO [js| getEditor() |]
+updateModel
+    :: Interface action
+    -> Action
+    -> Miso.Transition action Model ()
+updateModel iface = \case
+    OnCreated -> Miso.scheduleSub $ \sink -> do
+      parent <- getElementById $ uniqueId iface
+      widget <- createWidget parent "-- Put your Lua here\n" "lua" "monokai"
+      Miso.consoleLog $ jsval widget
 
-cmAddLintMessage :: (MonadIO m) => LintMessage -> m ()
-cmAddLintMessage lm =
-  case lm of
-    (LintError (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
-        liftIO [js_| addLintMessage(`ls, `cs, `le, `ce, 'error', `msg) |]
-    (LintWarning (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
-        liftIO [js_| addLintMessage(`ls, `cs, `le, `ce, 'warning', `msg) |]
+      addOnChangeEvent iface sink widget
 
-cmResetLintMessages :: (MonadIO m) => m ()
-cmResetLintMessages = liftIO [js_| resetMessages() |]
+      sink $ passAction iface $ WidgetCreated widget
 
-cmRefresh :: (MonadIO m) => m ()
-cmRefresh = liftIO [js_| cmRefresh() |]
+    WidgetCreated w ->
+      mCodeMirror .= Just w
 
-cmSelectRegion :: (MonadIO m) => Region -> m ()
-cmSelectRegion (Region (LineColPos ls cs _) (LineColPos le ce _)) =
-  liftIO [js_| cmSelectRegion(`ls, `cs, `le, `ce) |]
+    SetValue val -> do
+      mbCodeMirror <- use mCodeMirror
 
-foreign import javascript unsafe
-  "createOnEvent($1, $2)"
-  cmAddCallback :: JS.JSString -> F.Callback (IO ()) -> IO ()
+      forM_ mbCodeMirror $ \codeMirror -> do
+        Miso.scheduleSub $ \_sink -> do
+          cmSetText codeMirror $ Miso.toMisoString val
 
-codemirror :: MonadWidget t m => (CodeMirrorConfig t) -> m (CodeMirror t)
-codemirror (CodeMirrorConfig initTxt mode theme setText) = do
-  liftIO $ createCodeMirror initTxt mode theme
-  performEvent_ $ fmap (liftIO . cmSetText . JS.pack) setText
+    SetLintMessages lintMessages -> do
+      mbCodeMirror <- use mCodeMirror
 
-  postGui <- askPostGui
-  runWithActions <- askRunWithActions
+      forM_ mbCodeMirror $ \codeMirror ->
+        Miso.scheduleSub $ \_ -> do
+          cmResetLintMessages codeMirror
 
-  -- Create read event
-  ev' <- newEventWithTrigger $ \et -> do
-    callback <- F.syncCallback C.ContinueAsync $ do
-      txt <- cmGetText
-      postGui $ runWithActions [et :=> Identity txt]
+          forM_ lintMessages $ \lintMessage ->
+            addLintMessage codeMirror lintMessage
 
-    cmAddCallback "change" callback
+          cmRefresh codeMirror
 
-    return $ F.releaseCallback callback
+    SelectRegion (Region (LineColPos ls cs _) (LineColPos le ce _)) -> do
+      mbCodeMirror <- use mCodeMirror
 
-  value <- holdDyn (JS.unpack initTxt) $ leftmost [setText, ev']
+      forM_ mbCodeMirror $ \codeMirror ->
+        Miso.scheduleSub $ \_ ->
+          cmSelectRegion codeMirror ls cs le ce
 
-  return $ CodeMirror value
+viewModel :: Interface action -> Model -> Miso.View action
+viewModel iface _model =
+    div_
+      [ id_ $ uniqueId iface
+      , Miso.onCreated $ passAction iface OnCreated
+      ]
+      []
+
+foreign import javascript unsafe "$r = createCodeMirror($1, $2, $3, $4);"
+  createWidget
+    :: JSVal
+    -> JS.JSString
+    -> JS.JSString
+    -> JS.JSString
+    -> IO CodeMirrorWidget
+
+foreign import javascript unsafe "$r = document.getElementById($1);"
+  getElementById :: Miso.MisoString -> IO JSVal
+
+foreign import javascript unsafe "$1.setValue($2);console.log('setting value of', $1, $2)"
+  cmSetText :: CodeMirrorWidget -> JS.JSString -> IO ()
+
+addOnChangeEvent
+    :: Interface action
+    -> (action -> IO ())
+    -> CodeMirrorWidget
+    -> IO ()
+addOnChangeEvent iface sink widget = do
+    callback <- JSCallback.asyncCallback cbOnChange
+    jsAddOnChangeEvent widget callback
+  where
+    cbOnChange :: IO ()
+    cbOnChange = do
+      txt <- cmGetText widget
+      sink $ onChanged iface txt
+
+foreign import javascript unsafe "$1.on(\"change\", $2);"
+  jsAddOnChangeEvent :: CodeMirrorWidget -> Callback a -> IO ()
+
+foreign import javascript unsafe "$r = $1.getValue();"
+  cmGetText :: CodeMirrorWidget -> IO JS.JSString
+
+foreign import javascript unsafe "resetMessages($1)"
+  cmResetLintMessages :: CodeMirrorWidget -> IO ()
+
+addLintMessage :: CodeMirrorWidget -> LintMessage -> IO ()
+addLintMessage widget = \case
+  (LintError (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
+    cmAddLintMessage widget ls cs le ce "error" $ Miso.toMisoString msg
+  (LintWarning (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
+    cmAddLintMessage widget ls cs le ce "warning" $ Miso.toMisoString msg
+
+foreign import javascript unsafe "addLintMessage($1, $2, $3, $4, $5, $6, $7)"
+  cmAddLintMessage
+      :: CodeMirrorWidget
+      -> Int -- startLine
+      -> Int -- start column
+      -> Int -- end line
+      -> Int -- end column
+      -> JS.JSString -- severity (error or warning)
+      -> JS.JSString -- message
+      -> IO ()
+
+foreign import javascript unsafe "cmSelectRegion($1, $2, $3, $4, $5)"
+  cmSelectRegion
+      :: CodeMirrorWidget
+      -> Int -- startLine
+      -> Int -- start column
+      -> Int -- end line
+      -> Int -- end column
+      -> IO ()
+
+foreign import javascript unsafe "$1.refresh();"
+  cmRefresh :: CodeMirrorWidget -> IO ()

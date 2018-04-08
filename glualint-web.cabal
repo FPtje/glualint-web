@@ -26,16 +26,10 @@ executable glualint-web
   -- other-extensions:
   build-depends:
       base >=4.8
-    , containers
-    , dependent-sum
     , ghcjs-base
-    , ghcjs-dom
-    , ghcjs-ffiqq
     , glualint-lib
-    , reflex-dom
-    , reflex
-    , safe
-    , transformers
+    , lens
+    , miso
     , uu-parsinglib
 
   hs-source-dirs:      src
@@ -46,7 +40,3 @@ executable glualint-web
 
   cpp-options:
     -DGHCJS_BROWSER
-
-  default-extensions:
-    PackageImports
-    RecursiveDo

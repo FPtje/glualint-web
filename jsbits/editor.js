@@ -1,34 +1,38 @@
 // Linting messages
 var messages = [];
 
+function createCodeMirror(element, initValue, mode, theme) {
+  var editor = CodeMirror
+      (element
+      , { value: initValue
+        , mode: mode
+        , lint: true
+        , lineNumbers: true
+        , theme: theme
+        , gutters: ["CodeMirror-lint-markers"]
+        , autofocus: true
+        }
+      );
 
-var editor;
-var editorElement;
-function createCodeMirror(initValue, mode, theme) {
-  editor = CodeMirror(function(elt) { editorElement = elt; }, {value: initValue, mode: mode, lint: true, lineNumbers: true, theme: theme, gutters: ["CodeMirror-lint-markers"], autofocus: true});
   editor.setCursor(1, 0)
-  setTimeout(function() {
-    document.getElementById("content").appendChild(editorElement);
-    editor.refresh();
-    editor.focus();
+  editor.refresh();
+  editor.focus();
+  editor.execCommand('selectAll');
 
-    CodeMirror.registerHelper("lint", "lua", function() {
-      return messages;
-    });
+  CodeMirror.registerHelper("lint", "lua", function() {
+    return messages;
   });
+
+  return editor;
 }
 
-function getEditor() { return editor; };
-
-function createOnEvent(tp, f) {editor.on(tp, function() { f(); })};
-
-
-function resetMessages()
+function resetMessages(editor)
 {
   messages = [];
+  editor.refresh();
 };
 
-function addLintMessage(lineStart, columnStart, lineEnd, columnEnd, severity, msg)
+function addLintMessage(editor, lineStart, columnStart, lineEnd, columnEnd, severity, msg)
 {
   messages.push({
     from: CodeMirror.Pos(lineStart, columnStart),
@@ -38,12 +42,7 @@ function addLintMessage(lineStart, columnStart, lineEnd, columnEnd, severity, ms
   });
 }
 
-function cmRefresh()
-{
-  editor.refresh();
-}
-
-function cmSelectRegion(lineStart, columnStart, lineEnd, columnEnd)
+function cmSelectRegion(editor, lineStart, columnStart, lineEnd, columnEnd)
 {
   editor.setSelection(
     { line: lineStart
