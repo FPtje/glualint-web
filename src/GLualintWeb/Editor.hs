@@ -13,7 +13,7 @@ import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..))
 import qualified "ghcjs-base"     Data.JSString as JS
 import qualified "ghcjs-base"     GHCJS.Foreign.Callback as JSCallback
 import           "ghcjs-base"     GHCJS.Foreign.Callback ( Callback )
-import           "ghcjs-base"     GHCJS.Types ( IsJSVal, JSVal, jsval )
+import           "ghcjs-base"     GHCJS.Types ( IsJSVal, JSVal )
 import qualified "miso"            Miso
 import           "miso"            Miso.Html
 import qualified "miso"            Miso.String as Miso
@@ -61,7 +61,6 @@ updateModel iface = \case
     OnCreated -> Miso.scheduleSub $ \sink -> do
       parent <- getElementById $ uniqueId iface
       widget <- createWidget parent "-- Put your Lua here\n" "lua" "monokai"
-      Miso.consoleLog $ jsval widget
 
       addOnChangeEvent iface sink widget
 
@@ -77,6 +76,7 @@ updateModel iface = \case
         Miso.scheduleIO $ do
           let jsCode = Miso.toMisoString val
           cmSetText codeMirror jsCode
+
           pure $ onChanged iface jsCode
 
     SetLintMessages lintMessages -> do
@@ -117,7 +117,7 @@ foreign import javascript unsafe "$r = createCodeMirror($1, $2, $3, $4);"
 foreign import javascript unsafe "$r = document.getElementById($1);"
   getElementById :: Miso.MisoString -> IO JSVal
 
-foreign import javascript unsafe "$1.setValue($2);console.log('setting value of', $1, $2)"
+foreign import javascript unsafe "$1.setValue($2);"
   cmSetText :: CodeMirrorWidget -> JS.JSString -> IO ()
 
 addOnChangeEvent
@@ -170,5 +170,5 @@ foreign import javascript unsafe "cmSelectRegion($1, $2, $3, $4, $5)"
       -> Int -- end column
       -> IO ()
 
-foreign import javascript unsafe "$1.refresh();"
+foreign import javascript unsafe "$1.refresh();$1.performLint();"
   cmRefresh :: CodeMirrorWidget -> IO ()
