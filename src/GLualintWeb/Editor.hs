@@ -74,8 +74,10 @@ updateModel iface = \case
       mbCodeMirror <- use mCodeMirror
 
       forM_ mbCodeMirror $ \codeMirror -> do
-        Miso.scheduleSub $ \_sink -> do
-          cmSetText codeMirror $ Miso.toMisoString val
+        Miso.scheduleIO $ do
+          let jsCode = Miso.toMisoString val
+          cmSetText codeMirror jsCode
+          pure $ onChanged iface jsCode
 
     SetLintMessages lintMessages -> do
       mbCodeMirror <- use mCodeMirror
