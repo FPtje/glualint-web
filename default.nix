@@ -1,8 +1,9 @@
 {pkgs ? import <nixpkgs> {}, stdenv ? pkgs.stdenv, lib ? pkgs.lib}:
 let
   # Pin nixpkgs version down by default, but allow building with another version
-  nixpkgs = import (pkgs.fetchgit {
-    url = "https://github.com/NixOS/nixpkgs.git";
+  nixpkgs = import (pkgs.fetchFromGitHub {
+    owner = "NixOS";
+    repo = "nixpkgs";
     rev = "af0fec6d0a3e28c815e38296f3758e7d0916eba9";
     sha256 = "0knbmva5bmilhz4w3xi55dg22m7g44viawxa5n5x228av3bcmy5i";
   }) {};
@@ -13,8 +14,8 @@ let
   glualint-lib-src =
     nixpkgs.fetchgit {
       url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "59347185b63d9d33593d38e82895af4549b18de9";
-      sha256 = "1hrypg948lbmy2qm0m45hrj6jya04v3ljs140d1d7jp3ssdb3l0w";
+      rev = "157b4e7c65a6a502c1ba88eea69eb7b2fbb22d80";
+      sha256 = "0jnh7gdfw0hx300ky89a9zfn9hbzc0yq6f14s08flwhl3wd8155b";
     };
 
   miso-drv =
