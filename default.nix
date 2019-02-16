@@ -14,8 +14,8 @@ let
   glualint-lib-src =
     nixpkgs.fetchgit {
       url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "2b14a3abd47dd9b26ef2746f7a240f3e8da40a38";
-      sha256 = "1qh1p0h0g4ick5cmgad9lkhpfd7jhs4aijicr8cs2yywbhsg9c7y";
+      rev = "841cc43a767439abbec65e6136a303a2f15aefc1";
+      sha256 = "0qb3iw3w8knbc5fkcgs4nm1cr4qqh53wfydj5ihjjdkyacyikwby";
     };
 
   miso-drv =
