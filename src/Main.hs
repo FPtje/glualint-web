@@ -16,11 +16,10 @@ import qualified "ghcjs-base"   Data.JSString as JS
 import           "glualint-lib" GLua.AG.Token (Region(..))
 import qualified "glualint-lib" GLuaFixer.LintSettings as Settings
 import qualified "glualint-lib" GLuaFixer.AG.ASTLint as Lint
-import           "glualint-lib" GLuaFixer.LintMessage (LintMessage (..), sortLintMessages)
+import           "glualint-lib" GLuaFixer.LintMessage (LintMessage (..), Severity (..), sortLintMessages)
 import qualified "glualint-lib" GLuaFixer.Util as Util
 import qualified "glualint-lib" GLua.Parser as P
 import qualified "glualint-lib" GLua.AG.PrettyPrint as PP
-import qualified "glualint-lib" GLuaFixer.AG.DarkRPRewrite as DarkRP
 import           "lens"         Control.Lens hiding (view)
 import           "miso"         Miso (App(..), Transition)
 import qualified "miso"         Miso
@@ -151,20 +150,18 @@ viewModel m =
 
 viewLintMessage :: LintMessage -> View Action
 viewLintMessage = \case
-    lm@(LintError rg _ _) ->
+    lm@(LintMessage severity region _ _) ->
       p_ []
-      [ a_ [ class_ "lintMessage", onClick $ LintMessageClicked rg ]
-        [ a_ [ class_ "Error" ] [ text "Error" ]
+      [ a_ [ class_ "lintMessage", onClick $ LintMessageClicked region ]
+        [ a_ [ class_ (severityStr severity) ] [ text (severityStr severity) ]
         , text $ prettyPrintMessage lm
         ]
       ]
-    lm@(LintWarning rg _ _) ->
-      p_ []
-      [ a_ [ class_ "lintMessage", onClick $ LintMessageClicked rg ]
-        [ a_ [ class_ "Warning" ] [ text "Warning" ]
-        , text $ prettyPrintMessage lm
-        ]
-      ]
+  where
+    severityStr :: Severity -> JS.JSString
+    severityStr = \case
+      LintWarning -> "Warning"
+      LintError -> "Error"
 
 defConfig :: Settings.LintSettings
 defConfig = Settings.defaultLintSettings
@@ -186,16 +183,13 @@ prettyPrint lua =
     parsed = P.parseGLuaFromString lua
     ast = fst parsed
     ppconf = Settings.lint2ppSetting defConfig
-    pretty = PP.prettyprintConf ppconf $ DarkRP.fixOldDarkRPSyntax ast
+    pretty = PP.prettyprintConf ppconf ast
   in
     pretty
 
 prettyPrintMessage :: LintMessage -> JS.JSString
-prettyPrintMessage lm =
-  case lm of
-    LintError (Region (LineColPos l _ _) _) msg _ -> pretty l msg
-    LintWarning (Region (LineColPos l _ _) _) msg _ -> pretty l msg
-
+prettyPrintMessage = \case
+    LintMessage _severity (Region (LineColPos l _ _) _) msg _ -> pretty l msg
   where
     pretty :: Int -> String -> JS.JSString
     pretty l msg = "Line " <> Miso.toMisoString (succ l) <> ": " <> Miso.toMisoString msg

@@ -13,7 +13,7 @@ let
         isExecutable = true;
         executableHaskellDepends = [ base clay ];
         description = "CSS for glualint-web";
-        license = stdenv.lib.licenses.unfree;
+        license = pkgs.lib.licenses.unfree;
       };
 
   haskellPackages = if compiler == "default"

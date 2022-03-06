@@ -14,8 +14,8 @@ let
   glualint-lib-src =
     nixpkgs.fetchgit {
       url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "7e3ebb881c27e3b15d83d603d94f27559eabc9d5";
-      sha256 = "1d7cp71j25s7scz4i8xl52mg6ccfnswqx0bf79ddhpk4zb7q3r7q";
+      rev = "d3bf3afc6e0df16843e607dc0ee5f3407fbdea1c";
+      sha256 = "sha256-yliCcqY33YrqoiTZqJKz8iG2CMM+c7/oPxsObzna/YM=";
     };
 
   miso-drv =
@@ -46,7 +46,7 @@ let
       ];
       homepage = "http://github.com/dmjio/miso";
       description = "A tasty Haskell front-end framework";
-      license = stdenv.lib.licenses.bsd3;
+      license = lib.licenses.bsd3;
     };
 
   miso = callPackage miso-drv {};
@@ -61,14 +61,14 @@ let
     mkDerivation {
       pname = "glualint-web";
       version = "0.1.0.0";
-      src = stdenv.lib.cleanSource ./.;
+      src = lib.cleanSource ./.;
       isLibrary = false;
       isExecutable = true;
       executableHaskellDepends = [
         base ghcjs-base glualint-lib lens miso uu-parsinglib
       ];
       description = "Clientside web version of glualint";
-      license = stdenv.lib.licenses.gpl2;
+      license = lib.licenses.gpl2;
 
       postInstall = ''
         echo "Generating CSS file"

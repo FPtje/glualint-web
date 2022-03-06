@@ -9,7 +9,7 @@ module GLualintWeb.Editor where
 import           "base"           Control.Monad
 import           "lens"           Control.Lens
 import           "glualint-lib"   GLua.AG.Token (Region(..))
-import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..))
+import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..), Severity (..))
 import qualified "ghcjs-base"     Data.JSString as JS
 import qualified "ghcjs-base"     GHCJS.Foreign.Callback as JSCallback
 import           "ghcjs-base"     GHCJS.Foreign.Callback ( Callback )
@@ -145,10 +145,13 @@ foreign import javascript unsafe "resetMessages($1)"
 
 addLintMessage :: CodeMirrorWidget -> LintMessage -> IO ()
 addLintMessage widget = \case
-  (LintError (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
-    cmAddLintMessage widget ls cs le ce "error" $ Miso.toMisoString msg
-  (LintWarning (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _) ->
-    cmAddLintMessage widget ls cs le ce "warning" $ Miso.toMisoString msg
+    LintMessage severity (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _file ->
+      cmAddLintMessage widget ls cs le ce (severityStr severity) $ Miso.toMisoString msg
+  where
+    severityStr :: Severity -> JS.JSString
+    severityStr = \case
+      LintWarning -> "warning"
+      LintError -> "error"
 
 foreign import javascript unsafe "addLintMessage($1, $2, $3, $4, $5, $6, $7)"
   cmAddLintMessage
