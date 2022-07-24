@@ -9,7 +9,7 @@ module GLualintWeb.Editor where
 import           "base"           Control.Monad
 import           "lens"           Control.Lens
 import           "glualint-lib"   GLua.AG.Token (Region(..))
-import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..), Severity (..))
+import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription)
 import qualified "ghcjs-base"     Data.JSString as JS
 import qualified "ghcjs-base"     GHCJS.Foreign.Callback as JSCallback
 import           "ghcjs-base"     GHCJS.Foreign.Callback ( Callback )
@@ -146,7 +146,8 @@ foreign import javascript unsafe "resetMessages($1)"
 addLintMessage :: CodeMirrorWidget -> LintMessage -> IO ()
 addLintMessage widget = \case
     LintMessage severity (Region (LineColPos ls cs _) (LineColPos le ce _)) msg _file ->
-      cmAddLintMessage widget ls cs le ce (severityStr severity) $ Miso.toMisoString msg
+      cmAddLintMessage widget ls cs le ce (severityStr severity) $ Miso.toMisoString $
+      issueDescription msg
   where
     severityStr :: Severity -> JS.JSString
     severityStr = \case

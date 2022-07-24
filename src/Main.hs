@@ -11,12 +11,11 @@ module Main where
 
 import           "base"         Control.Concurrent
 import           "base"         Control.Monad
-import           "base"         Data.Monoid
 import qualified "ghcjs-base"   Data.JSString as JS
 import           "glualint-lib" GLua.AG.Token (Region(..))
 import qualified "glualint-lib" GLuaFixer.LintSettings as Settings
 import qualified "glualint-lib" GLuaFixer.AG.ASTLint as Lint
-import           "glualint-lib" GLuaFixer.LintMessage (LintMessage (..), Severity (..), sortLintMessages)
+import           "glualint-lib" GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription, sortLintMessages)
 import qualified "glualint-lib" GLuaFixer.Util as Util
 import qualified "glualint-lib" GLua.Parser as P
 import qualified "glualint-lib" GLua.AG.PrettyPrint as PP
@@ -71,6 +70,7 @@ main = do
       , view          = viewModel
       , events        = Miso.defaultEvents
       , subs          = [ ]
+      , logLevel      = Miso.Off
       , mountPoint    = Nothing
       }
 
@@ -189,7 +189,7 @@ prettyPrint lua =
 
 prettyPrintMessage :: LintMessage -> JS.JSString
 prettyPrintMessage = \case
-    LintMessage _severity (Region (LineColPos l _ _) _) msg _ -> pretty l msg
+    LintMessage _severity (Region (LineColPos l _ _) _) msg _ -> pretty l $ issueDescription msg
   where
     pretty :: Int -> String -> JS.JSString
     pretty l msg = "Line " <> Miso.toMisoString (succ l) <> ": " <> Miso.toMisoString msg

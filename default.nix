@@ -4,52 +4,57 @@ let
   nixpkgs = import (pkgs.fetchFromGitHub {
     owner = "NixOS";
     repo = "nixpkgs";
-    rev = "af0fec6d0a3e28c815e38296f3758e7d0916eba9";
-    sha256 = "0knbmva5bmilhz4w3xi55dg22m7g44viawxa5n5x228av3bcmy5i";
+    rev = "fb94afad504cae198ef496df796e74680cb303e6";
+    sha256 = "sha256-Wu5gDD9VwQVcryavYLcf1OEWU4kD76hrBcMd8NoEHT8=";
   }) {};
-in
-with nixpkgs.haskell.packages.ghcjs;
-let
 
-  glualint-lib-src =
-    nixpkgs.fetchgit {
-      url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "d3bf3afc6e0df16843e607dc0ee5f3407fbdea1c";
-      sha256 = "sha256-yliCcqY33YrqoiTZqJKz8iG2CMM+c7/oPxsObzna/YM=";
-    };
+  ghcjs = nixpkgs.haskell.packages.ghcjs.extend (final: previous: {
+    # Ghcjs is not compatible with Aeson 2
+    aeson = final.aeson_1_5_6_0;
 
-  miso-drv =
-    { mkDerivation, aeson, base, bytestring, containers, fetchgit
-    , ghcjs-base, http-api-data, http-types, network-uri, QuickCheck
-    , quickcheck-instances, scientific, servant, stdenv, text
-    , transformers, unordered-containers, vector
-    }:
-    mkDerivation {
+    miso = final.mkDerivation {
       pname = "miso";
-      version = "0.18.0.0";
-      src = fetchgit {
-        url = "https://github.com/dmjio/miso.git";
-        sha256 = "0i398cpk0vmmia7nrbgpqzxik96rp5rkgm8kv27r9pxyrgkdwfm8";
-        rev = "08526ed863124d2feacf31730a7a17bf26d43e28";
+      version = "1.8.2";
+      src = nixpkgs.fetchFromGitHub {
+        owner = "dmjio";
+        repo = "miso";
+        rev = "15886bd01725a551354f37cf804ebea5f9e36fa3";
+        sha256 = "sha256-NjhAcTshjiVhY1DmRYdeZyBxFPR69bhlDRM28D0zkpE=";
       };
       isLibrary = true;
       isExecutable = true;
-      libraryHaskellDepends = [
+      libraryHaskellDepends = with final; [
         aeson base bytestring containers ghcjs-base http-api-data
         http-types network-uri scientific servant text transformers
-        unordered-containers vector
+        unordered-containers vector file-embed jsaddle lucid tagsoup
       ];
-      executableHaskellDepends = [
+      executableHaskellDepends = with final; [
         aeson base bytestring containers ghcjs-base http-api-data
         http-types network-uri QuickCheck quickcheck-instances scientific
         servant text transformers unordered-containers vector
       ];
       homepage = "http://github.com/dmjio/miso";
       description = "A tasty Haskell front-end framework";
-      license = lib.licenses.bsd3;
+      license = nixpkgs.lib.licenses.bsd3;
     };
 
-  miso = callPackage miso-drv {};
+    # Freezes on test run
+    MissingH = previous.MissingH.overrideAttrs (prev: {doCheck = false;});
+    # Exits through OOM
+    tagsoup = previous.tagsoup.overrideAttrs (prev: {doCheck = false;});
+    # Freezes on test run
+    text-short = previous.text-short.overrideAttrs (prev: {doCheck = false;});
+
+  });
+in
+with ghcjs;
+let
+  glualint-lib-src =
+    nixpkgs.fetchgit {
+      url = "https://github.com/FPtje/GLuaFixer.git";
+      rev = "bffb777618c8033f524c12e2d7c0d8e19fd37286";
+      sha256 = "sha256-mFhukpELiGnObwOzbj97Osk1qdexoKfluDHrelk/NCc=";
+    };
 
   glualint-lib = callPackage glualint-lib-src { };
 
