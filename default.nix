@@ -67,7 +67,20 @@ let
     mkDerivation {
       pname = "glualint-web";
       version = "0.1.0.0";
-      src = lib.cleanSource ./.;
+      src = lib.cleanSourceWith rec {
+        name = "glualint-web-src";
+        src = ./.;
+        filter = path: type: let
+          relativePath = lib.removePrefix (toString src + "/") path;
+          srcWhitelist = [
+            "src(/.*)?"
+            "cabal\.config"
+            ".*\.cabal"
+            "LICENSE"
+            ".*\.hs"
+          ];
+        in builtins.any (r: builtins.match r relativePath != null) srcWhitelist;
+      };
       isLibrary = false;
       isExecutable = true;
       executableHaskellDepends = [
