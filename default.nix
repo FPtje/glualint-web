@@ -44,7 +44,8 @@ let
     tagsoup = previous.tagsoup.overrideAttrs (prev: {doCheck = false;});
     # Freezes on test run
     text-short = previous.text-short.overrideAttrs (prev: {doCheck = false;});
-
+    # Freezes on test run
+    vector = previous.vector.overrideAttrs (prev: {doCheck = false;});
   });
 in
 with ghcjs;
@@ -52,8 +53,8 @@ let
   glualint-lib-src =
     nixpkgs.fetchgit {
       url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "bffb777618c8033f524c12e2d7c0d8e19fd37286";
-      sha256 = "sha256-mFhukpELiGnObwOzbj97Osk1qdexoKfluDHrelk/NCc=";
+      rev = "af1020f18b2a5f78c6c64b12041f2745e2c25eb9";
+      sha256 = "sha256-zL0GcrNihSOaw5JkDi04ipOmBq8idj2m0VCKU2J1ZbA=";
     };
 
   glualint-lib = callPackage glualint-lib-src { };
