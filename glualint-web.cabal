@@ -27,7 +27,7 @@ executable glualint-web
   build-depends:
       base >=4.8
     , ghcjs-base
-    , glualint-lib
+    , glualint
     , lens
     , miso
     , uu-parsinglib

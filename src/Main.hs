@@ -12,13 +12,12 @@ module Main where
 import           "base"         Control.Concurrent
 import           "base"         Control.Monad
 import qualified "ghcjs-base"   Data.JSString as JS
-import           "glualint-lib" GLua.AG.Token (Region(..))
-import qualified "glualint-lib" GLuaFixer.LintSettings as Settings
-import qualified "glualint-lib" GLuaFixer.AG.ASTLint as Lint
-import           "glualint-lib" GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription, sortLintMessages)
-import qualified "glualint-lib" GLuaFixer.Util as Util
-import qualified "glualint-lib" GLua.Parser as P
-import qualified "glualint-lib" GLua.AG.PrettyPrint as PP
+import           "glualint" GLua.AG.Token (Region(..))
+import qualified "glualint" GLuaFixer.LintSettings as Settings
+import           "glualint" GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription, sortLintMessages)
+import qualified "glualint" GLuaFixer.Interface as GLua
+import qualified "glualint" GLua.Parser as P
+import qualified "glualint" GLua.AG.PrettyPrint as PP
 import           "lens"         Control.Lens hiding (view)
 import           "miso"         Miso (App(..), Transition)
 import qualified "miso"         Miso
@@ -168,14 +167,15 @@ defConfig = Settings.defaultLintSettings
 
 lintString :: String -> LintStatus
 lintString str = do
-  let parsed = Util.parseFile defConfig "input" str
-
-  case parsed of
-    Right ([], ast) -> case Lint.astWarnings defConfig ast of
-      [] -> Good
-      xs -> Warnings $ map ($"input") xs
-    Right (warnings, _) -> Warnings warnings
-    Left errs -> SyntaxErrors errs
+  case GLua.lex defConfig "input" str of
+    Left lexErrors -> SyntaxErrors lexErrors
+    Right mtokens ->
+      case GLua.parse defConfig "input" mtokens of
+        Left parseErrors -> SyntaxErrors parseErrors
+        Right ast ->
+          case GLua.lexiconLint "input" defConfig mtokens ++ GLua.astLint "input" defConfig ast of
+            [] -> Good
+            warnings -> Warnings warnings
 
 prettyPrint :: String -> String
 prettyPrint lua =

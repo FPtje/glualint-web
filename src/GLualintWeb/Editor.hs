@@ -8,8 +8,8 @@ module GLualintWeb.Editor where
 
 import           "base"           Control.Monad
 import           "lens"           Control.Lens
-import           "glualint-lib"   GLua.AG.Token (Region(..))
-import           "glualint-lib"   GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription)
+import           "glualint"   GLua.AG.Token (Region(..))
+import           "glualint"   GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription)
 import qualified "ghcjs-base"     Data.JSString as JS
 import qualified "ghcjs-base"     GHCJS.Foreign.Callback as JSCallback
 import           "ghcjs-base"     GHCJS.Foreign.Callback ( Callback )

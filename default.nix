@@ -1,4 +1,4 @@
-{pkgs ? import <nixpkgs> {}, stdenv ? pkgs.stdenv, lib ? pkgs.lib}:
+{pkgs ? import <nixpkgs> {}}:
 let
   # Pin nixpkgs version down by default, but allow building with another version
   nixpkgs = import (pkgs.fetchFromGitHub {
@@ -44,6 +44,8 @@ let
     tagsoup = previous.tagsoup.overrideAttrs (prev: {doCheck = false;});
     # Freezes on test run
     text-short = previous.text-short.overrideAttrs (prev: {doCheck = false;});
+    # Test failure
+    unliftio = previous.unliftio.overrideAttrs (pref: {doCheck = false;});
     # Freezes on test run
     vector = previous.vector.overrideAttrs (prev: {doCheck = false;});
   });
@@ -53,11 +55,20 @@ let
   glualint-lib-src =
     nixpkgs.fetchgit {
       url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "af1020f18b2a5f78c6c64b12041f2745e2c25eb9";
-      sha256 = "sha256-zL0GcrNihSOaw5JkDi04ipOmBq8idj2m0VCKU2J1ZbA=";
+      rev = "f33dcb2d81edf61e19d0f4e376b3b84609e2be24";
+      sha256 = "sha256-aL5ptT+SlfEyntXr0Zd4eV/XxNG7F+HyGjrjnpXudB8=";
     };
 
-  glualint-lib = callPackage glualint-lib-src { };
+  # Only build the library, because the executable is not compatible with GHC 8.10, which is the
+  # basis of GHCJS.
+  glualint-lib = nixpkgs.haskell.lib.doJailbreak ((callPackage glualint-lib-src { }).overrideAttrs (prev: {
+    postPatch = ''
+      ${prev.postPatch}
+      awk '/executable glualint/{exit} 1' glualint.cabal > tmp
+      mv tmp glualint.cabal
+      rm -rf app
+    '';
+  }));
 
   glualint-web-styles = callPackage ./styles { };
 
@@ -67,11 +78,11 @@ let
     mkDerivation {
       pname = "glualint-web";
       version = "0.1.0.0";
-      src = lib.cleanSourceWith rec {
+      src = nixpkgs.lib.cleanSourceWith rec {
         name = "glualint-web-src";
         src = ./.;
         filter = path: type: let
-          relativePath = lib.removePrefix (toString src + "/") path;
+          relativePath = nixpkgs.lib.removePrefix (toString src + "/") path;
           srcWhitelist = [
             "src(/.*)?"
             "cabal\.config"
@@ -87,7 +98,7 @@ let
         base ghcjs-base glualint-lib lens miso uu-parsinglib
       ];
       description = "Clientside web version of glualint";
-      license = lib.licenses.gpl2;
+      license = nixpkgs.lib.licenses.gpl2;
 
       postInstall = ''
         echo "Generating CSS file"
