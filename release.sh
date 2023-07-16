@@ -14,7 +14,7 @@ fi;
 
 DRV_PATH=$(nix-instantiate --no-gc-warning)
 
-OUT_PATHS=$(nix build "$DRV_PATH" --out-link glualint-web-result --print-build-logs --print-out-paths)
+OUT_PATHS=$(nix build "$DRV_PATH^*" --out-link glualint-web-result --print-build-logs --print-out-paths)
 
 nix-store --query --requisites --include-outputs "$DRV_PATH" | grep -v '\.drv' | cachix push glualint
 echo "$OUT_PATHS" | cachix push glualint
