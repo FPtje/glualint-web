@@ -61,14 +61,14 @@ let
 
   # Only build the library, because the executable is not compatible with GHC 8.10, which is the
   # basis of GHCJS.
-  glualint-lib = nixpkgs.haskell.lib.doJailbreak ((callPackage glualint-lib-src { }).overrideAttrs (prev: {
+  glualint-lib = with nixpkgs.haskell.lib; dontHaddock (doJailbreak ((callPackage glualint-lib-src { }).overrideAttrs (prev: {
     postPatch = ''
       ${prev.postPatch}
       awk '/executable glualint/{exit} 1' glualint.cabal > tmp
       mv tmp glualint.cabal
       rm -rf app
     '';
-  }));
+  })));
 
   glualint-web-styles = callPackage ./styles { };
 
