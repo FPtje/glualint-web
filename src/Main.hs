@@ -12,7 +12,7 @@ module Main where
 import           "base"         Control.Concurrent
 import           "base"         Control.Monad
 import qualified "ghcjs-base"   Data.JSString as JS
-import           "glualint" GLua.AG.Token (Region(..))
+import           "glualint" GLua.Position (Region(..), LineColPos(..))
 import qualified "glualint" GLuaFixer.LintSettings as Settings
 import           "glualint" GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription, sortLintMessages)
 import qualified "glualint" GLuaFixer.Interface as GLua
@@ -24,7 +24,6 @@ import qualified "miso"         Miso
 import           "miso"         Miso.Html
 import qualified "miso"         Miso.String as Miso
 import qualified "this"         GLualintWeb.Editor as CodeMirror
-import           "uu-parsinglib"  Text.ParserCombinators.UU.BasicInstances (LineColPos (..))
 
 data LintStatus =
     Good -- Good code, no problems!
@@ -102,11 +101,12 @@ updateModel = \case
     PrettyPrint -> do
       str <- use mCodeMirrorValue
 
-      zoom mCodeMirror $
-        CodeMirror.updateModel codeMirrorIface $
-          CodeMirror.SetValue $
-          prettyPrint $
-          Miso.fromMisoString str
+      let mbPretty = prettyPrint $ Miso.fromMisoString str
+
+      forM_ mbPretty $ \pretty ->
+        zoom mCodeMirror $
+          CodeMirror.updateModel codeMirrorIface $
+            CodeMirror.SetValue pretty
 
     LintMessageClicked rg ->
       zoom mCodeMirror $
@@ -177,15 +177,15 @@ lintString str = do
             [] -> Good
             warnings -> Warnings warnings
 
-prettyPrint :: String -> String
+prettyPrint :: String -> Maybe String
 prettyPrint lua =
   let
-    parsed = P.parseGLuaFromString lua
-    ast = fst parsed
+    eParsed = P.parseGLuaFromString lua
     ppconf = Settings.lint2ppSetting defConfig
-    pretty = PP.prettyprintConf ppconf ast
   in
-    pretty
+    case eParsed of
+      Left _ -> Nothing
+      Right ast -> Just $ PP.prettyprintConf ppconf ast
 
 prettyPrintMessage :: LintMessage -> JS.JSString
 prettyPrintMessage = \case

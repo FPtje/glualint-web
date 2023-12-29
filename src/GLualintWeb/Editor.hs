@@ -8,7 +8,7 @@ module GLualintWeb.Editor where
 
 import           "base"           Control.Monad
 import           "lens"           Control.Lens
-import           "glualint"   GLua.AG.Token (Region(..))
+import           "glualint"   GLua.Position (Region(..), LineColPos(..))
 import           "glualint"   GLuaFixer.LintMessage (LintMessage (..), Severity (..), issueDescription)
 import qualified "ghcjs-base"     Data.JSString as JS
 import qualified "ghcjs-base"     GHCJS.Foreign.Callback as JSCallback
@@ -17,7 +17,6 @@ import           "ghcjs-base"     GHCJS.Types ( IsJSVal, JSVal )
 import qualified "miso"            Miso
 import           "miso"            Miso.Html
 import qualified "miso"            Miso.String as Miso
-import           "uu-parsinglib"   Text.ParserCombinators.UU.BasicInstances (LineColPos (..))
 
 
 data Model

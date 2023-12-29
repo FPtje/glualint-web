@@ -55,8 +55,8 @@ let
   glualint-lib-src =
     nixpkgs.fetchgit {
       url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "1d246206f02db63bd369104b3416186fb9e916f0";
-      sha256 = "sha256-MWUou1tfuMAJgfaqD3iT0T/wE7Gq/qzeeOzWRcFYi+g=";
+      rev = "252216137d6a51ffbb39b76fc507d21db6c2802b";
+      sha256 = "sha256-/E9fPG9MOCgHVRv5pIA4lzmKbobnRLpIuQ3jP2sDm00=";
     };
 
   # Only build the library, because the executable is not compatible with GHC 8.10, which is the
@@ -72,9 +72,7 @@ let
 
   glualint-web-styles = callPackage ./styles { };
 
-  drv = { mkDerivation, base, ghcjs-base, glualint-lib, lens, miso, stdenv
-    , uu-parsinglib
-    }:
+  drv = { mkDerivation, base, ghcjs-base, glualint-lib, lens, miso, stdenv}:
     mkDerivation {
       pname = "glualint-web";
       version = "0.1.0.0";
@@ -95,7 +93,7 @@ let
       isLibrary = false;
       isExecutable = true;
       executableHaskellDepends = [
-        base ghcjs-base glualint-lib lens miso uu-parsinglib
+        base ghcjs-base glualint-lib lens miso
       ];
       description = "Clientside web version of glualint";
       license = nixpkgs.lib.licenses.gpl2;
