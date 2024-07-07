@@ -55,8 +55,8 @@ let
   glualint-lib-src =
     nixpkgs.fetchgit {
       url = "https://github.com/FPtje/GLuaFixer.git";
-      rev = "180c3757b57bf0ed29753090589d92a05cbf02c7";
-      sha256 = "sha256-uyiMUuvKtaEmaie804vHfsvUB9oBO+6zmLpsK4/B+rE=";
+      rev = "41276b38c984b16d7db690475319d3230f82bc45";
+      sha256 = "sha256-ndcIJUYPq6mjQBmalnRrO2Zn+UNa6XlVXaPSSA9oc4g=";
     };
 
   # Only build the library, because the executable is not compatible with GHC 8.10, which is the
